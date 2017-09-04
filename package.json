@@ -1,0 +1,11 @@
+{
+  "name": "execute-js",
+  "version": "1.0.0",
+  "description": "Decision tree executor for JavaScript",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Pooya Paridel",
+  "license": "MIT"
+}
