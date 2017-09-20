@@ -1,7 +1,27 @@
 const log = data => console.log(data);
 
+const spreadify = function() {
+        // Holds the processed arguments for use by `fn`
+        var spreadArgs = {};
+
+        // Caching length
+        var length = arguments.length;
+
+        var currentArg;
+
+        for (var i = 0; i < length; i++) {
+            currentArg = arguments[i];
+
+            Object.keys(currentArg).map((key) => {
+                spreadArgs[key] = currentArg[key];
+            });
+        }
+
+        return spreadArgs;
+};
+
 const processSteps = (executionTree, executionData) => {
-    let
+
     const processStep = (step) => {
         return new Promise((resolve, reject) => {
             const goToNextStep = () => {
@@ -17,7 +37,7 @@ const processSteps = (executionTree, executionData) => {
                     reject('Unhandled scenario');
                 } else {
                     // move on to the next step down the tree
-                    processSteps(nextStep);
+                    return processSteps(nextStep, executionData);
                 }
             };
 
@@ -32,7 +52,14 @@ const processSteps = (executionTree, executionData) => {
                     log(`Action result: ${JSON.stringify(result)}`);
 
                     if ('test' in step) {
-                        goToNextStep();
+                        goToNextStep().then((childResult) => {
+                            log(`Child result: ${JSON.stringify(childResult)}`);
+
+                            let totalResult = spreadify(result, childResult);
+                            log(`Total result: ${JSON.stringify(totalResult)}`);
+
+                            resolve(totalResult);
+                        });
                     } else {
                         resolve(result);
                     }
@@ -45,26 +72,42 @@ const processSteps = (executionTree, executionData) => {
                 //     resolve(
                 //         actionResult);
                 // }
-            } else if ('test' in step) {
-                log(`Step: ${step.title}`);
-                goToNextStep();
             } else {
                 log(`Step: ${step.title}`);
-                resolve();
+
+                if ('test' in step) {
+                    goToNextStep().then((childResult) => {
+                        log(`Child result: ${JSON.stringify(childResult)}`);
+                        log(`Total result: ${JSON.stringify(spreadify(childResult) )}`);
+                        resolve(childResult);
+                    });
+                } else {
+                    resolve();
+                }
             }
         });
     };
 
-    let stepsPromise = null;
+    let stepsPromise = [];
+    let finalResult = {};
 
-    executionTree.map((step, index)=>{
-        if (index === 0) {
-            stepsPromise = processStep(step, executionData);
-        } else {
-            stepsPromise.then(processStep(step, executionData));
-        }
+    executionTree.map((step)=>{
+        stepsPromise.push(processStep(step, executionData).then((stepResult)=>{
+            finalResult = spreadify(finalResult, stepResult);
+            return Promise.resolve(finalResult);
+        }));
     });
-    return stepsPromise;
+
+
+    return new Promise((resolve, reject) => {
+        stepsPromise.reduce(function(cur, next) {
+            return cur.then(next);
+        }).then(function() {
+            console.log(finalResult);
+            resolve(finalResult);
+        });
+    });
+
 };
 
 module.exports = processSteps;
