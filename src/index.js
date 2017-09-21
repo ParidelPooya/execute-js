@@ -1,145 +1,194 @@
-const log = data => console.log(data);
+"use strict";
 
+class Execute {
+    static spreadify() {
+        // Holds the processed arguments for use by `fn`
+        let spreadArgs = {};
 
-const spreadify = function() {
-    // Holds the processed arguments for use by `fn`
-    let spreadArgs = {};
+        // Caching length
+        let length = arguments.length;
 
-    // Caching length
-    let length = arguments.length;
+        let currentArg;
 
-    let currentArg;
+        for (let i = 0; i < length; i++) {
+            currentArg = arguments[i];
 
-    for (let i = 0; i < length; i++) {
-        currentArg = arguments[i];
+            Object.keys(currentArg).map((key) => {
+                spreadArgs[key] = currentArg[key];
+            });
+        }
 
-        Object.keys(currentArg).map((key) => {
-            spreadArgs[key] = currentArg[key];
-        });
-    }
-
-    return spreadArgs;
-};
-
-const goToNextStep = (step, executionData) => {
-    const testResult = typeof step.test === 'function'
-        ? step.test(executionData) // call the test with the results from the action
-        : step.test;
-
-    log(`Test result: ${testResult}`);
-    // get a reference to the next step based on the test result
-    const nextStep = step.if[testResult] || step.if.default;
-
-    if (!nextStep) {
-        reject('Unhandled scenario');
-    } else {
-        // move on to the next step down the tree
-        return processSteps(nextStep, executionData);
-    }
-};
-
-const processStep = (step, executionData) => {
-
-    const defaultStepSettings = {
-        retry: 1
+        return spreadArgs;
     };
-    let _step = spreadify(defaultStepSettings, step);
-    let allData = spreadify(executionData, {});
 
-    return new Promise((resolve, reject) => {
+    constructor(options) {
+        let defaultOption = {
+            logger: console,
+            cache: require("./tiny-cache")
+        };
 
-        if (_step.action) {
-            log(`Step: ${_step.title}`);
+        let _options = Execute.spreadify(defaultOption, options);
 
-            let actionResult = Promise.resolve(_step.action(executionData));
+        this._logger = _options.logger;
+        this._cache = _options.cache;
+    };
 
-            for(let i=0; i < _step.retry; i++) {
-                actionResult = actionResult.catch(()=> {
-                    log(`Step: ${_step.title} try ${i+1} failed. Retrying...`);
-                    return _step.action(executionData);
-                });
-            }
+    static run(executionTree, executionData, options) {
 
-            actionResult.then( (result) => {
+        let execute = new Execute(options ? options : {});
 
-                log(`Action result: ${JSON.stringify(result)}`);
+        return execute.processSteps(executionTree, executionData);
+    };
 
-                allData = spreadify(allData, result);
+    goToNextStep(step, executionData){
+        const testResult = typeof step.test === 'function'
+            ? step.test(executionData) // call the test with the results from the action
+            : step.test;
 
-                // if there's a test defined, then actionResult must be a promise
-                // so pass the promise response to goToNextStep
-                if ('test' in _step) {
-                    goToNextStep(_step, allData).then((childResult) => {
-                        log(`Child result: ${JSON.stringify(childResult)}`);
+        this._logger.info(`Test result: ${testResult}`);
+        // get a reference to the next step based on the test result
+        const nextStep = step.if[testResult] || step.if.default;
 
-                        let totalResult = spreadify(result, childResult);
-                        log(`Total result: ${JSON.stringify(totalResult)}`);
+        if (!nextStep) {
+            reject('Unhandled scenario');
+        } else {
+            // move on to the next step down the tree
+            return this.processSteps(nextStep, executionData);
+        }
+    };
 
-                        resolve(totalResult);
+    executeStepAction(step, executionData){
+        const defaultCacheSettings = {
+            enable: false,
+            ttl: 60
+        };
+
+        let _cacheSettings = Execute.spreadify(defaultCacheSettings, step.cache || {});
+
+        if (_cacheSettings.enable) {
+            let cacheKey = _cacheSettings.key(executionData);
+            return Promise.resolve(this._cache.has(cacheKey))
+                .then((hasData)=> {
+                    console.log("Has Data:", hasData);
+                    if (hasData) {
+                        return Promise.resolve(this._cache.get(cacheKey));
+                    } else {
+                        return Promise.resolve(step.action(executionData)).then((data)=> {
+                            return Promise.resolve(this._cache.set(cacheKey, data, _cacheSettings.ttl)).then((set_result)=> {
+                                console.log("Set Data in Cache result:", set_result);
+                                return Promise.resolve(data);
+                            });
+                        });
+                    }
+            })
+        } else {
+            return Promise.resolve(step.action(executionData));
+        }
+
+    };
+
+    processStep(step, executionData){
+
+        const defaultStepSettings = {
+            retry: 1
+        };
+        let _step = Execute.spreadify(defaultStepSettings, step);
+        let allData = Execute.spreadify(executionData, {});
+
+        return new Promise((resolve, reject) => {
+
+            if (_step.action) {
+                this._logger.info(`Step: ${_step.title}`);
+
+                let actionResult = this.executeStepAction(_step, executionData);
+
+                for(let i = 0; i < _step.retry; i++) {
+                    actionResult = actionResult.catch(()=> {
+                        this._logger.info(`Step: ${_step.title} try ${i+1} failed. Retrying...`);
+                        return _step.action(executionData);
                     });
-                } else {
-                    resolve(result);
                 }
 
-            }).catch( (e)=> {
-                reject(e);
-            });
+                actionResult.then( (result) => {
 
-        } else {
-            log(`Step: ${_step.title}`);
+                    this._logger.info(`Action result: ${JSON.stringify(result)}`);
 
-            if ('test' in _step) {
-                goToNextStep(_step, allData).then((childResult) => {
-                    log(`Child result: ${JSON.stringify(childResult)}`);
-                    log(`Total result: ${JSON.stringify(spreadify(childResult) )}`);
-                    resolve(childResult);
+                    allData = Execute.spreadify(allData, result);
+
+                    // if there's a test defined, then actionResult must be a promise
+                    // so pass the promise response to goToNextStep
+                    if ('test' in _step) {
+                        this.goToNextStep(_step, allData).then((childResult) => {
+                            this._logger.info(`Child result: ${JSON.stringify(childResult)}`);
+
+                            let totalResult = Execute.spreadify(result, childResult);
+                            this._logger.info(`Total result: ${JSON.stringify(totalResult)}`);
+
+                            resolve(totalResult);
+                        });
+                    } else {
+                        resolve(result);
+                    }
+
+                }).catch( (e)=> {
+                    reject(e);
                 });
+
             } else {
-                resolve();
+                this._logger.info(`Step: ${_step.title}`);
+
+                if ('test' in _step) {
+                    this.goToNextStep(_step, allData).then((childResult) => {
+                        this._logger.info(`Child result: ${JSON.stringify(childResult)}`);
+                        this._logger.info(`Total result: ${JSON.stringify(Execute.spreadify(childResult) )}`);
+                        resolve(childResult);
+                    });
+                } else {
+                    resolve();
+                }
             }
-        }
-    });
-};
-
-const processSteps = (executionTree, executionData) => {
-
-    let _executionTree;
-
-    if( Object.prototype.toString.call( executionTree ) === '[object Array]' ) {
-        // if executionTree is array then we need to convert it to proper object with all missing properties.
-        _executionTree = {
-            steps : executionTree
-        };
-    } else {
-        _executionTree = executionTree;
-    }
-
-    const defaultExecutionTreeSettings = {
-        concurrency: 1
+        });
     };
 
-    _executionTree = spreadify(defaultExecutionTreeSettings, _executionTree);
+    processSteps(executionTree, executionData){
 
-    let finalResult = {};
+        let _executionTree;
 
-    let allData = spreadify(executionData, {});
+        if( Object.prototype.toString.call( executionTree ) === '[object Array]' ) {
+            // if executionTree is array then we need to convert it to proper object with all missing properties.
+            _executionTree = {
+                steps : executionTree
+            };
+        } else {
+            _executionTree = executionTree;
+        }
 
-    return new Promise((resolve, reject) => {
-        _executionTree.steps.reduce(function (allStepsSoFar, next) {
+        const defaultExecutionTreeSettings = {
+            concurrency: 1
+        };
 
-            return allStepsSoFar.then(() => {
-                return processStep(next, allData).then((stepResult) => {
-                    finalResult = spreadify(finalResult, stepResult);
-                    allData = spreadify(allData, stepResult);
-                    return finalResult;
-                }).catch( (e)=> {reject(e)})
-            });
+        _executionTree = Execute.spreadify(defaultExecutionTreeSettings, _executionTree);
 
-        }, Promise.resolve()).then(function () {
-            resolve(finalResult);
+        if()
+        let finalResult = {};
+
+        let allData = Execute.spreadify(executionData, {});
+
+        return new Promise((resolve, reject) => {
+            _executionTree.steps.reduce((allStepsSoFar, next) => {
+
+                return allStepsSoFar.then(() => {
+                    return this.processStep(next, allData).then((stepResult) => {
+                        finalResult = Execute.spreadify(finalResult, stepResult);
+                        allData = Execute.spreadify(allData, stepResult);
+                        return finalResult;
+                    }).catch( (e)=> {reject(e)})
+                });
+
+            }, Promise.resolve()).then(() => {resolve(finalResult)});
         });
-    });
 
-};
+    };
+}
 
-module.exports = processSteps;
+module.exports = Execute.run;

@@ -8,41 +8,31 @@ const func = (data)=> {
         setTimeout(()=> {
             console.log(data);
             resolve(data);
-        }, Math.round(5000));
+        }, Math.round(Math.random()*1000));
     });
 };
 
-const cacheOptions = {
-    enable: true,
-    ttl: 60,
-    key: (data) => data.sub_id
-};
 
 let executionTree = {
-    concurrency: 1,
+    concurrency: true,
     steps :[
         {
-            cache: cacheOptions,
             title:'step 1',
             action: (data) => func({a: 1})
         },
         {
-            cache: cacheOptions,
             title:'step 2',
             action: (data) => func({b: 2})
         },
         {
-            cache: cacheOptions,
             title:'step 3',
             action: (data) => func({c: 3})
         },
         {
-            cache: cacheOptions,
             title:'step 4',
             action: (data) => func({d: 4})
         },
         {
-            cache: cacheOptions,
             title:'step 5',
             action: (data) => func({e: 5})
         }
@@ -58,6 +48,6 @@ let executionData = {
 execute(executionTree, executionData).then( (result)=> {
     console.log("finished with this result:");
     console.log(result);
-}).catch( (e)=> {
-    console.log("catch", e);
+}).catch( ()=> {
+    console.log("catch");
 });
