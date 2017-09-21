@@ -3,14 +3,14 @@ const log = data => console.log(data);
 
 const spreadify = function() {
     // Holds the processed arguments for use by `fn`
-    var spreadArgs = {};
+    let spreadArgs = {};
 
     // Caching length
-    var length = arguments.length;
+    let length = arguments.length;
 
-    var currentArg;
+    let currentArg;
 
-    for (var i = 0; i < length; i++) {
+    for (let i = 0; i < length; i++) {
         currentArg = arguments[i];
 
         Object.keys(currentArg).map((key) => {
@@ -40,23 +40,36 @@ const goToNextStep = (step, executionData) => {
 
 const processStep = (step, executionData) => {
 
+    const defaultStepSettings = {
+        retry: 1
+    };
+    let _step = spreadify(defaultStepSettings, step);
     let allData = spreadify(executionData, {});
 
     return new Promise((resolve, reject) => {
 
-        if (step.action) {
-            const actionResult = step.action(executionData);
+        if (_step.action) {
+            log(`Step: ${_step.title}`);
 
-            // if there's a test defined, then actionResult must be a promise
-            // so pass the promise response to goToNextStep
-            Promise.resolve(actionResult).then( (result) => {
-                log(`Step: ${step.title}`);
+            let actionResult = Promise.resolve(_step.action(executionData));
+
+            for(let i=0; i < _step.retry; i++) {
+                actionResult = actionResult.catch(()=> {
+                    log(`Step: ${_step.title} try ${i+1} failed. Retrying...`);
+                    return _step.action(executionData);
+                });
+            }
+
+            actionResult.then( (result) => {
+
                 log(`Action result: ${JSON.stringify(result)}`);
 
                 allData = spreadify(allData, result);
 
-                if ('test' in step) {
-                    goToNextStep(step, allData).then((childResult) => {
+                // if there's a test defined, then actionResult must be a promise
+                // so pass the promise response to goToNextStep
+                if ('test' in _step) {
+                    goToNextStep(_step, allData).then((childResult) => {
                         log(`Child result: ${JSON.stringify(childResult)}`);
 
                         let totalResult = spreadify(result, childResult);
@@ -68,13 +81,15 @@ const processStep = (step, executionData) => {
                     resolve(result);
                 }
 
+            }).catch( (e)=> {
+                reject(e);
             });
 
         } else {
-            log(`Step: ${step.title}`);
+            log(`Step: ${_step.title}`);
 
-            if ('test' in step) {
-                goToNextStep(step, allData).then((childResult) => {
+            if ('test' in _step) {
+                goToNextStep(_step, allData).then((childResult) => {
                     log(`Child result: ${JSON.stringify(childResult)}`);
                     log(`Total result: ${JSON.stringify(spreadify(childResult) )}`);
                     resolve(childResult);
@@ -99,12 +114,12 @@ const processSteps = (executionTree, executionData) => {
         _executionTree = executionTree;
     }
 
-    _executionTree = spreadify(_executionTree, {
+    const defaultExecutionTreeSettings = {
         concurrency: 1
-    });
+    };
 
+    _executionTree = spreadify(defaultExecutionTreeSettings, _executionTree);
 
-    let stepsPromise = [];
     let finalResult = {};
 
     let allData = spreadify(executionData, {});
@@ -117,7 +132,7 @@ const processSteps = (executionTree, executionData) => {
                     finalResult = spreadify(finalResult, stepResult);
                     allData = spreadify(allData, stepResult);
                     return finalResult;
-                });
+                }).catch( (e)=> {reject(e)})
             });
 
         }, Promise.resolve()).then(function () {
