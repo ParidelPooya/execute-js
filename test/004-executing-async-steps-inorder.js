@@ -2,28 +2,39 @@
 
 let execute = require("../src/index");
 
+const func = (data)=> {
+    return new Promise((resolve, reject) => {
+
+        setTimeout(()=> {
+            console.log(data);
+            resolve(data);
+        }, Math.round(Math.random()*1000));
+    });
+};
+
+
 let executionTree = {
     concurrency: 1,
     steps :[
         {
             title:'step 1',
-            action: (data) => {return {a: 1};}
+            action: (data) => func({a: 1})
         },
         {
             title:'step 2',
-            action: (data) => {return {b: 2};}
+            action: (data) => func({b: 2})
         },
         {
             title:'step 3',
-            action: (data) => {return {c: 3};}
+            action: (data) => func({c: 3})
         },
         {
             title:'step 4',
-            action: (data) => {return {d: 4};}
+            action: (data) => func({d: 4})
         },
         {
             title:'step 5',
-            action: (data) => {return {e: 5};}
+            action: (data) => func({e: 5})
         }
     ]
 };

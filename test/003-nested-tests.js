@@ -2,37 +2,25 @@
 
 let execute = require("../src/index");
 
-const f1 = (data)=> {
-        return {a:1};
-};
-
-const f2 = (data)=> {
-    return {b:2};
-};
-
-const f3 = (data)=> {
-    return {c:3};
-};
-
 let executionTree = [
     {
         id: 'step1',
         title:'step 1',
-        action: f1,
-        test: data => data.JobCode,
+        action: (data)=> {return {a: 1};},
+        test: data => data.Code === 'code1',
         if: {
-            job1:[
+            true:[
                 {
                     id: 'step2',
                     title:'step 2',
-                    action: f2,
-                    test: data => data.JobCode,
+                    action: (data)=> {return {b: 2};},
+                    test: data => data.Type === 'type1',
                     if: {
-                        job1: [
+                        true: [
                             {
                                 id: 'step3',
                                 title:'step 3',
-                                action: f3
+                                action: (data)=> {return {c: 3};}
                             }
                         ]
                     }
@@ -43,7 +31,8 @@ let executionTree = [
 ];
 
 let executionData = {
-    JobCode: 'job1'
+    Code: 'code1',
+    Type: 'type1'
 };
 
 execute(executionTree, executionData).then( (result)=> {
