@@ -169,11 +169,12 @@ class Execute {
 
         _executionTree = Execute.spreadify(defaultExecutionTreeSettings, _executionTree);
 
-        if()
         let finalResult = {};
 
         let allData = Execute.spreadify(executionData, {});
 
+
+        /*
         return new Promise((resolve, reject) => {
             _executionTree.steps.reduce((allStepsSoFar, next) => {
 
@@ -187,6 +188,21 @@ class Execute {
 
             }, Promise.resolve()).then(() => {resolve(finalResult)});
         });
+        */
+        let throttleActions = require("./throttle-actions");
+
+        var ps = [];
+        _executionTree.steps.map((step) => {
+            ps.push(() => {
+                return this.processStep(step, allData).then((stepResult) => {
+                    finalResult = Execute.spreadify(finalResult, stepResult);
+                    allData = Execute.spreadify(allData, stepResult);
+                    return finalResult;
+                });
+            });
+        });
+
+        return throttleActions(ps, _executionTree.concurrency).then(() => finalResult);
 
     };
 }
