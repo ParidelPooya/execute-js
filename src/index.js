@@ -57,7 +57,34 @@ class Execute {
         }
     };
 
-    executeStepAction(step, executionData){
+    executeStepActionWithRetry(step, executionData){
+
+        const defaultRetrySettings = {
+            maxAttempts: 1,
+            error: () => true
+        };
+
+        let _retry = Execute.spreadify(defaultRetrySettings, step.retry || {});
+
+
+        let action = Promise.resolve(step.action(executionData));
+
+        for(let i = 0; i < _retry.maxAttempts; i++) {
+            action = action.catch((e)=> {
+                if (_retry.tryCondition(e)){
+                    this._logger.info(`Step: ${step.title} try ${i+1} failed. Retrying...`);
+                    return Promise.resolve(step.action(executionData));
+                }
+                else {
+                    return Promise.reject(e);
+                }
+            });
+        }
+
+        return action;
+    }
+
+    executeStepActionWithCache(step, executionData){
         const defaultCacheSettings = {
             enable: false,
             ttl: 60
@@ -73,7 +100,7 @@ class Execute {
                     if (hasData) {
                         return Promise.resolve(this._cache.get(cacheKey));
                     } else {
-                        return Promise.resolve(step.action(executionData)).then((data)=> {
+                        return this.executeStepActionWithRetry(step, executionData).then((data)=> {
                             return Promise.resolve(this._cache.set(cacheKey, data, _cacheSettings.ttl)).then((set_result)=> {
                                 console.log("Set Data in Cache result:", set_result);
                                 return Promise.resolve(data);
@@ -82,7 +109,7 @@ class Execute {
                     }
             })
         } else {
-            return Promise.resolve(step.action(executionData));
+            return this.executeStepActionWithRetry(step, executionData);
         }
 
     };
@@ -92,6 +119,7 @@ class Execute {
         const defaultStepSettings = {
             retry: 1
         };
+
         let _step = Execute.spreadify(defaultStepSettings, step);
         let allData = Execute.spreadify(executionData, {});
 
@@ -100,14 +128,7 @@ class Execute {
             if (_step.action) {
                 this._logger.info(`Step: ${_step.title}`);
 
-                let actionResult = this.executeStepAction(_step, executionData);
-
-                for(let i = 0; i < _step.retry; i++) {
-                    actionResult = actionResult.catch(()=> {
-                        this._logger.info(`Step: ${_step.title} try ${i+1} failed. Retrying...`);
-                        return _step.action(executionData);
-                    });
-                }
+                let actionResult = this.executeStepActionWithCache(_step, executionData);
 
                 actionResult.then( (result) => {
 
@@ -175,6 +196,7 @@ class Execute {
 
 
         /*
+        // Old way that execute one step at a time (sequential)
         return new Promise((resolve, reject) => {
             _executionTree.steps.reduce((allStepsSoFar, next) => {
 
