@@ -1,0 +1,89 @@
+{
+  "env": {
+    "browser": false,
+    "node": true,
+    "es6": true
+  },
+  "extends": "eslint:recommended",
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "module"
+  },
+  "rules": {
+    "no-console": [
+      "off"
+    ],
+    "indent": [
+      "error",
+      4,
+      {
+        "SwitchCase": 1
+      }
+    ],
+    "linebreak-style": [
+      "error",
+      "unix"
+    ],
+    "quotes": [
+      "error",
+      "double",
+      {
+        "avoidEscape": true,
+        "allowTemplateLiterals": true
+      }
+    ],
+    "semi": [
+      "error",
+      "always"
+    ],
+    "curly": [
+      "error",
+      "all"
+    ],
+    "eqeqeq": [
+      "error",
+      "smart"
+    ],
+    "strict": [
+      "error",
+      "global"
+    ],
+    "wrap-iife": [
+      "error",
+      "any"
+    ],
+    "no-use-before-define": [
+      "error",
+      {
+        "functions": false,
+        "classes": true
+      }],
+    "new-cap": [
+      "error"
+    ],
+    "no-caller": [
+      "error"
+    ],
+    "dot-notation": [
+      "error"
+    ],
+    "no-undef": [
+      "error"
+    ],
+    "no-unused-vars": [
+      "error",
+      {
+        "vars": "all",
+        "argsIgnorePattern": "err|data|reply"
+      }
+    ],
+    "no-cond-assign": [
+      "error",
+      "except-parens"
+    ],
+    "no-eq-null": [
+      "error"
+    ],
+    "no-var": "error"
+  }
+}

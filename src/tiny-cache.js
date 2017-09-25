@@ -1,5 +1,3 @@
-"use strict";
-
 // create a unique, global symbol name
 // -----------------------------------
 
@@ -8,8 +6,8 @@ const DATA_KEY = Symbol.for("TinyCache.data");
 // check if the global object has this symbol
 // add it if it does not have the symbol, yet
 // ------------------------------------------
-var globalSymbols = Object.getOwnPropertySymbols(global);
-var hasData = (globalSymbols.indexOf(DATA_KEY) > -1);
+let globalSymbols = Object.getOwnPropertySymbols(global);
+let hasData = (globalSymbols.indexOf(DATA_KEY) > -1);
 
 if (!hasData){
     global[DATA_KEY] = {};
@@ -17,7 +15,7 @@ if (!hasData){
 
 // define the singleton API
 // ------------------------
-var singleton = {
+let singleton = {
     get: function(key){
         return global[DATA_KEY][key];
     },

@@ -1,5 +1,3 @@
-"use strict";
-
 class Execute {
     static spreadify() {
         // Holds the processed arguments for use by `fn`
@@ -19,7 +17,7 @@ class Execute {
         }
 
         return spreadArgs;
-    };
+    }
 
     constructor(options) {
         let defaultOption = {
@@ -31,17 +29,17 @@ class Execute {
 
         this._logger = _options.logger;
         this._cache = _options.cache;
-    };
+    }
 
     static run(executionTree, executionData, options) {
 
         let execute = new Execute(options ? options : {});
 
         return execute.processSteps(executionTree, executionData);
-    };
+    }
 
     goToNextStep(step, executionData){
-        const testResult = typeof step.test === 'function'
+        const testResult = typeof step.test === "function"
             ? step.test(executionData) // call the test with the results from the action
             : step.test;
 
@@ -50,12 +48,13 @@ class Execute {
         const nextStep = step.if[testResult] || step.if.default;
 
         if (!nextStep) {
-            reject('Unhandled scenario');
+            // TODO: better handeling if the next step is missing.
+            return Promise.reject("Unhandled scenario");
         } else {
             // move on to the next step down the tree
             return this.processSteps(nextStep, executionData);
         }
-    };
+    }
 
     executeStepActionWithRetry(step, executionData){
 
@@ -107,12 +106,11 @@ class Execute {
                             });
                         });
                     }
-            })
+                });
         } else {
             return this.executeStepActionWithRetry(step, executionData);
         }
-
-    };
+    }
 
     processStep(step, executionData){
 
@@ -138,7 +136,7 @@ class Execute {
 
                     // if there's a test defined, then actionResult must be a promise
                     // so pass the promise response to goToNextStep
-                    if ('test' in _step) {
+                    if ("test" in _step) {
                         this.goToNextStep(_step, allData).then((childResult) => {
                             this._logger.info(`Child result: ${JSON.stringify(childResult)}`);
 
@@ -158,7 +156,7 @@ class Execute {
             } else {
                 this._logger.info(`Step: ${_step.title}`);
 
-                if ('test' in _step) {
+                if ("test" in _step) {
                     this.goToNextStep(_step, allData).then((childResult) => {
                         this._logger.info(`Child result: ${JSON.stringify(childResult)}`);
                         this._logger.info(`Total result: ${JSON.stringify(Execute.spreadify(childResult) )}`);
@@ -169,13 +167,13 @@ class Execute {
                 }
             }
         });
-    };
+    }
 
     processSteps(executionTree, executionData){
 
         let _executionTree;
 
-        if( Object.prototype.toString.call( executionTree ) === '[object Array]' ) {
+        if( Object.prototype.toString.call( executionTree ) === "[object Array]" ) {
             // if executionTree is array then we need to convert it to proper object with all missing properties.
             _executionTree = {
                 steps : executionTree
@@ -213,7 +211,7 @@ class Execute {
         */
         let throttleActions = require("./throttle-actions");
 
-        var ps = [];
+        let ps = [];
         _executionTree.steps.map((step) => {
             ps.push(() => {
                 return this.processStep(step, allData).then((stepResult) => {
@@ -226,7 +224,7 @@ class Execute {
 
         return throttleActions(ps, _executionTree.concurrency).then(() => finalResult);
 
-    };
+    }
 }
 
 module.exports = Execute.run;

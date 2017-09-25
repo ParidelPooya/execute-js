@@ -1,5 +1,3 @@
-"use strict";
-
 /**
  * https://stackoverflow.com/questions/38385419/throttle-amount-of-promises-open-at-a-given-time
  * Performs a list of callable actions (promise factories) so that only a limited
