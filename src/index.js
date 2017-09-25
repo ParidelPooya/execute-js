@@ -60,7 +60,7 @@ class Execute {
 
         const defaultRetrySettings = {
             maxAttempts: 1,
-            error: () => true
+            tryCondition: () => true
         };
 
         let _retry = Execute.spreadify(defaultRetrySettings, step.retry || {});
@@ -113,59 +113,72 @@ class Execute {
     }
 
     processStep(step, executionData){
-
         const defaultStepSettings = {
-            retry: 1
+            output: {}
         };
 
         let _step = Execute.spreadify(defaultStepSettings, step);
         let allData = Execute.spreadify(executionData, {});
 
+        this._logger.info(`Step: ${_step.title}`);
+
         return new Promise((resolve, reject) => {
 
+            let actionResult;
+
             if (_step.action) {
-                this._logger.info(`Step: ${_step.title}`);
-
-                let actionResult = this.executeStepActionWithCache(_step, executionData);
-
-                actionResult.then( (result) => {
-
-                    this._logger.info(`Action result: ${JSON.stringify(result)}`);
-
-                    allData = Execute.spreadify(allData, result);
-
-                    // if there's a test defined, then actionResult must be a promise
-                    // so pass the promise response to goToNextStep
-                    if ("test" in _step) {
-                        this.goToNextStep(_step, allData).then((childResult) => {
-                            this._logger.info(`Child result: ${JSON.stringify(childResult)}`);
-
-                            let totalResult = Execute.spreadify(result, childResult);
-                            this._logger.info(`Total result: ${JSON.stringify(totalResult)}`);
-
-                            resolve(totalResult);
-                        });
-                    } else {
-                        resolve(result);
-                    }
-
-                }).catch( (e)=> {
-                    reject(e);
-                });
-
+                actionResult = this.executeStepActionWithCache(_step, executionData);
             } else {
-                this._logger.info(`Step: ${_step.title}`);
+                actionResult = Promise.resolve({});
+            }
 
+            actionResult.then( (result) => {
+
+                const defaultOutputSettings = {
+                    accessibleToNextSteps: true,
+                    addToResult: true,
+                    copyResultToDifferentNode: null
+                };
+                let _output = Execute.spreadify(defaultOutputSettings, _step.output);
+
+                let _result = {};
+
+                if (_output.copyResultToDifferentNode !== null) {
+                    _result[_output.copyResultToDifferentNode] = result;
+                } else {
+                    _result = result;
+                }
+
+                this._logger.info(`Action result: ${JSON.stringify(_result)}`);
+
+                if (_output.accessibleToNextSteps) {
+                    allData = Execute.spreadify(allData, _result);
+                }
+
+                // if there's a test defined, then actionResult must be a promise
+                // so pass the promise response to goToNextStep
                 if ("test" in _step) {
                     this.goToNextStep(_step, allData).then((childResult) => {
                         this._logger.info(`Child result: ${JSON.stringify(childResult)}`);
-                        this._logger.info(`Total result: ${JSON.stringify(Execute.spreadify(childResult) )}`);
-                        resolve(childResult);
+
+                        if (_output.copyResultToDifferentNode !== null) {
+                            _result[_output.copyResultToDifferentNode] = Execute.spreadify(result, childResult);
+                        } else {
+                            _result = Execute.spreadify(result, childResult);
+                        }
+
+                        this._logger.info(`Total result: ${JSON.stringify(_result)}`);
+
+                        resolve(_result);
                     });
                 } else {
-                    resolve();
+                    resolve(_result);
                 }
-            }
+
+            }).catch( (e)=> {
+                reject(e);
+            });
+
         });
     }
 
@@ -213,10 +226,32 @@ class Execute {
 
         let ps = [];
         _executionTree.steps.map((step) => {
+            const defaultStepSettings = {
+                output: {}
+            };
+            let _step = Execute.spreadify(defaultStepSettings, step);
+
             ps.push(() => {
                 return this.processStep(step, allData).then((stepResult) => {
-                    finalResult = Execute.spreadify(finalResult, stepResult);
-                    allData = Execute.spreadify(allData, stepResult);
+                    const defaultOutputSettings = {
+                        accessibleToNextSteps: true,
+                        addToResult: true,
+                        copyResultToDifferentNode: null
+                    };
+                    let _output = Execute.spreadify(defaultOutputSettings, _step.output);
+
+                    if (_output.accessibleToNextSteps) {
+                        allData = Execute.spreadify(allData, stepResult);
+                    }
+
+                    let _stepResult = {};
+
+                    if (_output.addToResult) {
+                        _stepResult = stepResult;
+                    }
+
+                    finalResult = Execute.spreadify(finalResult, _stepResult);
+
                     return finalResult;
                 });
             });
