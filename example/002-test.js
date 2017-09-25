@@ -34,10 +34,6 @@ let executionData = {
 execute(executionTree, executionData).then( (result)=> {
     console.log("finished with this result:");
     console.log(result);
-
-    console.log("execution data:");
-    console.log(executionData);
-
 }).catch( ()=> {
     console.log("catch");
 });

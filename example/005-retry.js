@@ -20,7 +20,8 @@ let executionTree = {
             title:'step 1',
             retry: {
                 maxAttempts: 10
-            }
+            },
+            action: (data) => func({a: 1})
         }
     ]
 };
