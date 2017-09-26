@@ -2,26 +2,14 @@
 
 let execute = require("../src/index");
 
-const func = (data)=> {
-    return new Promise((resolve, reject) => {
-        if (Math.random() > 0.8) {
-            resolve(data);
-        } else {
-            reject({errorCode:1,errorMsg:'error'});
-        }
-    });
-};
-
-
 let executionTree = {
     concurrency: 1,
     steps :[
         {
-            title:'step 1',
-            retry: {
-                maxAttempts: 10
-            },
-            action: (data) => func({a: 1})
+            title:'step 1'
+        },
+        {
+            title:'step 2'
         }
     ]
 };

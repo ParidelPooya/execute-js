@@ -14,7 +14,7 @@ const func = (data)=> {
 
 
 let executionTree = {
-    concurrency: 3,
+    concurrency: 2,
     steps :[
         {
             title:'step 1',

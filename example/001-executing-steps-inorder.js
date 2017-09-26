@@ -2,9 +2,7 @@
 
 let execute = require("../src/index");
 
-let executionTree = {
-    concurrency: 1,
-    steps :[
+let executionTree = [
         {
             title:'step 1',
             action: (data) => {return {a: 1};}
@@ -25,8 +23,7 @@ let executionTree = {
             title:'step 5',
             action: (data) => {return {e: 5};}
         }
-    ]
-};
+    ];
 
 
 

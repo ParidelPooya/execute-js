@@ -115,15 +115,7 @@ class Execute {
 
         return new Promise((resolve, reject) => {
 
-            let actionResult;
-
-            if (_step.action) {
-                actionResult = this.executeStepActionWithCache(_step, executionData);
-            } else {
-                actionResult = Promise.resolve({});
-            }
-
-            actionResult.then( (result) => {
+            this.executeStepActionWithCache(_step, executionData).then( (result) => {
 
                 let _output = Execute.spreadify(
                     Execute.sxecutionTreeDefaultSetting.steps[0].output,
@@ -261,7 +253,8 @@ Execute.sxecutionTreeDefaultSetting = {
                 accessibleToNextSteps: true,
                 addToResult: true,
                 copyResultToDifferentNode: null
-            }
+            },
+            action: () => {return {};}
         }
     ]
 };
