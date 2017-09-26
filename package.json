@@ -1,8 +1,8 @@
 {
   "name": "execute-js",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Application workflow executor for JavaScript",
-  "main": "lib/execute-js.js",
+  "main": "lib/execute-js.min.js",
   "scripts": {
     "build": "webpack",
     "dev": "webpack --config webpack.dev.js --progress --colors --watch",
