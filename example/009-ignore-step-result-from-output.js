@@ -9,7 +9,7 @@ let executionTree = {
             title:'step 1',
             action: (data) => {return {a: 1};},
             output: {
-                addToResult: true
+                addToResult: false
             }
         },
         {

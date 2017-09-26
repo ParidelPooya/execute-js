@@ -58,13 +58,9 @@ class Execute {
 
     executeStepActionWithRetry(step, executionData){
 
-        const defaultRetrySettings = {
-            maxAttempts: 1,
-            tryCondition: () => true
-        };
-
-        let _retry = Execute.spreadify(defaultRetrySettings, step.retry || {});
-
+        let _retry = Execute.spreadify(
+            Execute.sxecutionTreeDefaultSetting.steps[0].retry ,
+            step.retry || {});
 
         let action = Promise.resolve(step.action(executionData));
 
@@ -84,12 +80,10 @@ class Execute {
     }
 
     executeStepActionWithCache(step, executionData){
-        const defaultCacheSettings = {
-            enable: false,
-            ttl: 60
-        };
 
-        let _cacheSettings = Execute.spreadify(defaultCacheSettings, step.cache || {});
+        let _cacheSettings = Execute.spreadify(
+            Execute.sxecutionTreeDefaultSetting.steps[0].cache,
+            step.cache || {});
 
         if (_cacheSettings.enable) {
             let cacheKey = _cacheSettings.key(executionData);
@@ -113,11 +107,8 @@ class Execute {
     }
 
     processStep(step, executionData){
-        const defaultStepSettings = {
-            output: {}
-        };
 
-        let _step = Execute.spreadify(defaultStepSettings, step);
+        let _step = Execute.spreadify(Execute.sxecutionTreeDefaultSetting.steps[0], step);
         let allData = Execute.spreadify(executionData, {});
 
         this._logger.info(`Step: ${_step.title}`);
@@ -134,12 +125,9 @@ class Execute {
 
             actionResult.then( (result) => {
 
-                const defaultOutputSettings = {
-                    accessibleToNextSteps: true,
-                    addToResult: true,
-                    copyResultToDifferentNode: null
-                };
-                let _output = Execute.spreadify(defaultOutputSettings, _step.output);
+                let _output = Execute.spreadify(
+                    Execute.sxecutionTreeDefaultSetting.steps[0].output,
+                    _step.output);
 
                 let _result = {};
 
@@ -195,11 +183,7 @@ class Execute {
             _executionTree = executionTree;
         }
 
-        const defaultExecutionTreeSettings = {
-            concurrency: 1
-        };
-
-        _executionTree = Execute.spreadify(defaultExecutionTreeSettings, _executionTree);
+        _executionTree = Execute.spreadify(Execute.sxecutionTreeDefaultSetting, _executionTree);
 
         let finalResult = {};
 
@@ -226,19 +210,17 @@ class Execute {
 
         let ps = [];
         _executionTree.steps.map((step) => {
-            const defaultStepSettings = {
-                output: {}
-            };
-            let _step = Execute.spreadify(defaultStepSettings, step);
+
+            let _step = Execute.spreadify(
+                Execute.sxecutionTreeDefaultSetting.steps[0],
+                step);
 
             ps.push(() => {
                 return this.processStep(step, allData).then((stepResult) => {
-                    const defaultOutputSettings = {
-                        accessibleToNextSteps: true,
-                        addToResult: true,
-                        copyResultToDifferentNode: null
-                    };
-                    let _output = Execute.spreadify(defaultOutputSettings, _step.output);
+
+                    let _output = Execute.spreadify(
+                        Execute.sxecutionTreeDefaultSetting.steps[0].output,
+                        _step.output);
 
                     if (_output.accessibleToNextSteps) {
                         allData = Execute.spreadify(allData, stepResult);
@@ -261,5 +243,27 @@ class Execute {
 
     }
 }
+
+// Because static keyword works only for method
+Execute.sxecutionTreeDefaultSetting = {
+    concurrency: 1,
+    steps:[
+        {
+            retry: {
+                maxAttempts: 1,
+                tryCondition: () => true
+            },
+            cache: {
+                enable: false,
+                ttl: 60
+            },
+            output: {
+                accessibleToNextSteps: true,
+                addToResult: true,
+                copyResultToDifferentNode: null
+            }
+        }
+    ]
+};
 
 module.exports = Execute.run;
