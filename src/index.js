@@ -1,22 +1,65 @@
 class Execute {
-    static spreadify() {
-        // Holds the processed arguments for use by `fn`
-        let spreadArgs = {};
-
-        // Caching length
-        let length = arguments.length;
-
-        let currentArg;
-
-        for (let i = 0; i < length; i++) {
-            currentArg = arguments[i];
-
-            Object.keys(currentArg).map((key) => {
-                spreadArgs[key] = currentArg[key];
-            });
+    static getByPath(obj, key) {
+        if (key.length === 0) {
+            return obj;
         }
 
-        return spreadArgs;
+        let keys = key.split(".");
+
+        for (let i = 0; i < keys.length; i++) {
+            if (typeof(obj.key) === "undefined") {
+                obj.key = {};
+            }
+            obj = obj[keys[i]];
+        }
+
+        return obj;
+    }
+
+    static copyToPath(sourceObj, sourcePath, data) {
+        let obj = sourceObj;
+        let keys = sourcePath.split(".");
+
+        for (let i = 0; i < keys.length; i++) {
+            if (typeof(obj[keys[i]]) === "undefined") {
+                obj[keys[i]] = {};
+            }
+
+            if(i === keys.length -1){
+                obj[keys[i]] = data;
+            } else {
+                obj = obj[keys[i]];
+            }
+        }
+    }
+
+    static spreadify(deepCopy) {
+        return function(){
+            // Holds the processed arguments for use by `fn`
+            let spreadArgs = {};
+
+            // Caching length
+            let length = arguments.length;
+
+            let currentArg;
+
+            for (let i = 0; i < length; i++) {
+                currentArg = arguments[i];
+
+                Object.keys(currentArg).map((key) => {
+                    if (deepCopy &&
+                        typeof(spreadArgs[key]) === "object" && spreadArgs[key] !== null &&
+                        typeof(currentArg[key]) === "object" && currentArg[key] !== null
+
+                    ) {
+                        spreadArgs[key] = Execute.spreadify(deepCopy)(spreadArgs[key], currentArg[key]);
+                    } else {
+                        spreadArgs[key] = currentArg[key];
+                    }
+                });
+            }
+            return spreadArgs;
+        };
     }
 
     constructor(options) {
@@ -25,7 +68,7 @@ class Execute {
             cache: require("./tiny-cache")
         };
 
-        let _options = Execute.spreadify(defaultOption, options);
+        let _options = Execute.spreadify()(defaultOption, options);
 
         this._logger = _options.logger;
         this._cache = _options.cache;
@@ -58,7 +101,7 @@ class Execute {
 
     executeStepActionWithRetry(step, executionData){
 
-        let _retry = Execute.spreadify(
+        let _retry = Execute.spreadify()(
             Execute.sxecutionTreeDefaultSetting.steps[0].retry ,
             step.retry || {});
 
@@ -81,7 +124,7 @@ class Execute {
 
     executeStepActionWithCache(step, executionData){
 
-        let _cacheSettings = Execute.spreadify(
+        let _cacheSettings = Execute.spreadify()(
             Execute.sxecutionTreeDefaultSetting.steps[0].cache,
             step.cache || {});
 
@@ -108,8 +151,8 @@ class Execute {
 
     processStep(step, executionData){
 
-        let _step = Execute.spreadify(Execute.sxecutionTreeDefaultSetting.steps[0], step);
-        let allData = Execute.spreadify(executionData, {});
+        let _step = Execute.spreadify()(Execute.sxecutionTreeDefaultSetting.steps[0], step);
+        let allData = Execute.spreadify()(executionData, {});
 
         this._logger.info(`Step: ${_step.title}`);
 
@@ -117,22 +160,23 @@ class Execute {
 
             this.executeStepActionWithCache(_step, executionData).then( (result) => {
 
-                let _output = Execute.spreadify(
+                let _output = Execute.spreadify(true)(
                     Execute.sxecutionTreeDefaultSetting.steps[0].output,
                     _step.output);
 
                 let _result = {};
 
-                if (_output.copyResultToDifferentNode !== null) {
-                    _result[_output.copyResultToDifferentNode] = result;
-                } else {
-                    _result = result;
+                if (_output.map.destination.length !== 0){
+                    Execute.copyToPath(_result, _output.map.destination, Execute.getByPath(result, _output.map.source));
+                }
+                else {
+                    _result = Execute.getByPath(result, _output.map.source);
                 }
 
                 this._logger.info(`Action result: ${JSON.stringify(_result)}`);
 
                 if (_output.accessibleToNextSteps) {
-                    allData = Execute.spreadify(allData, _result);
+                    allData = Execute.spreadify()(allData, _result);
                 }
 
                 // if there's a test defined, then actionResult must be a promise
@@ -141,11 +185,24 @@ class Execute {
                     this.goToNextStep(_step, allData).then((childResult) => {
                         this._logger.info(`Child result: ${JSON.stringify(childResult)}`);
 
-                        if (_output.copyResultToDifferentNode !== null) {
-                            _result[_output.copyResultToDifferentNode] = Execute.spreadify(result, childResult);
-                        } else {
-                            _result = Execute.spreadify(result, childResult);
+                        let totalResult = Execute.spreadify(true)(result, childResult);
+
+                        _result = {};
+
+                        if (_output.map.destination.length !== 0){
+                            Execute.copyToPath(_result, _output.map.destination, Execute.getByPath(totalResult, _output.map.source));
                         }
+                        else {
+                            _result = Execute.getByPath(totalResult, _output.map.source);
+                        }
+
+                        /*
+                        if (_output.copyResultToDifferentNode !== null) {
+                            _result[_output.copyResultToDifferentNode] = Execute.spreadify()(result, childResult);
+                        } else {
+                            _result = Execute.spreadify()(result, childResult);
+                        }
+                        */
 
                         this._logger.info(`Total result: ${JSON.stringify(_result)}`);
 
@@ -175,47 +232,28 @@ class Execute {
             _executionTree = executionTree;
         }
 
-        _executionTree = Execute.spreadify(Execute.sxecutionTreeDefaultSetting, _executionTree);
+        _executionTree = Execute.spreadify()(Execute.sxecutionTreeDefaultSetting, _executionTree);
 
         let finalResult = {};
-
-        let allData = Execute.spreadify(executionData, {});
-
-
-        /*
-        // Old way that execute one step at a time (sequential)
-        return new Promise((resolve, reject) => {
-            _executionTree.steps.reduce((allStepsSoFar, next) => {
-
-                return allStepsSoFar.then(() => {
-                    return this.processStep(next, allData).then((stepResult) => {
-                        finalResult = Execute.spreadify(finalResult, stepResult);
-                        allData = Execute.spreadify(allData, stepResult);
-                        return finalResult;
-                    }).catch( (e)=> {reject(e)})
-                });
-
-            }, Promise.resolve()).then(() => {resolve(finalResult)});
-        });
-        */
+        let allData = Execute.spreadify()(executionData, {});
         let throttleActions = require("./throttle-actions");
 
         let ps = [];
         _executionTree.steps.map((step) => {
 
-            let _step = Execute.spreadify(
+            let _step = Execute.spreadify()(
                 Execute.sxecutionTreeDefaultSetting.steps[0],
                 step);
 
             ps.push(() => {
                 return this.processStep(step, allData).then((stepResult) => {
 
-                    let _output = Execute.spreadify(
+                    let _output = Execute.spreadify()(
                         Execute.sxecutionTreeDefaultSetting.steps[0].output,
                         _step.output);
 
                     if (_output.accessibleToNextSteps) {
-                        allData = Execute.spreadify(allData, stepResult);
+                        allData = Execute.spreadify()(allData, stepResult);
                     }
 
                     let _stepResult = {};
@@ -224,7 +262,7 @@ class Execute {
                         _stepResult = stepResult;
                     }
 
-                    finalResult = Execute.spreadify(finalResult, _stepResult);
+                    finalResult = Execute.spreadify()(finalResult, _stepResult);
 
                     return finalResult;
                 });
@@ -252,7 +290,10 @@ Execute.sxecutionTreeDefaultSetting = {
             output: {
                 accessibleToNextSteps: true,
                 addToResult: true,
-                copyResultToDifferentNode: null
+                map: {
+                    source: "",
+                    destination: ""
+                }
             },
             action: () => {return {};}
         }

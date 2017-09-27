@@ -7,11 +7,14 @@ let executionTree = {
     steps :[
         {
             title:'step 1',
-            action: (data) => {return {a: 1};},
+            action: (data) => {return {from: {a: 1}} ;},
             output: {
                 addToResult: true,
                 accessibleToNextSteps: true,
-                copyResultToDifferentNode: "different-node"
+                map: {
+                    source: "from",
+                    destination: "different-node"
+                }
             }
         },
         {
