@@ -6,8 +6,8 @@
   "scripts": {
     "build": "webpack",
     "dev": "webpack --config webpack.dev.js --progress --colors --watch",
-    "test": "lab -e qa -P tests -l",
-    "coverage": "lab -e qa -P tests -l -r html --coverage-exclude lib/homeseller-report/nqer/node_modules  --coverage-exclude migration/update-subscriptions/node_modules --coverage-exclude monitoring/unprocessed/node_modules -o ./test/coverage.html"
+    "test": "lab -e qa -P test -l",
+    "coverage": "lab -e qa -P test -l -r html --coverage-exclude lib/homeseller-report/nqer/node_modules  --coverage-exclude migration/update-subscriptions/node_modules --coverage-exclude monitoring/unprocessed/node_modules -o ./test/coverage.html"
   },
   "devDependencies": {
     "babel-cli": "6.24.1",
