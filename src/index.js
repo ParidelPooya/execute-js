@@ -103,7 +103,7 @@ class Execute {
 
         let _retry = Execute.spreadify()(
             Execute.sxecutionTreeDefaultSetting.steps[0].retry ,
-            step.retry || {});
+            step.retry);
 
         let action = Promise.resolve(step.action(executionData));
 
@@ -207,11 +207,12 @@ class Execute {
                         this._logger.info(`Total result: ${JSON.stringify(_result)}`);
 
                         resolve(_result);
+                    }).catch((e)=>{
+                        reject(e);
                     });
                 } else {
                     resolve(_result);
                 }
-
             }).catch( (e)=> {
                 reject(e);
             });
@@ -262,7 +263,7 @@ class Execute {
                         _stepResult = stepResult;
                     }
 
-                    finalResult = Execute.spreadify()(finalResult, _stepResult);
+                    finalResult = Execute.spreadify(true)(finalResult, _stepResult);
 
                     return finalResult;
                 });
@@ -280,7 +281,7 @@ Execute.sxecutionTreeDefaultSetting = {
     steps:[
         {
             retry: {
-                maxAttempts: 1,
+                maxAttempts: 0,
                 tryCondition: () => true
             },
             cache: {

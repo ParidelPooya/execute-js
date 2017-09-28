@@ -20,7 +20,10 @@ let executionTree = [
                             {
                                 id: 'step3',
                                 title:'step 3',
-                                action: (data)=> {return {c: 3};}
+                                action: (data)=> {
+                                    throw {name:"UserException", message:"Error"}
+                                    return {c: 3};
+                                }
                             }
                         ]
                     }
@@ -38,6 +41,6 @@ let executionData = {
 execute(executionTree, executionData).then( (result)=> {
     console.log("finished with this result:");
     console.log(JSON.stringify(result, null, 2));
-}).catch( ()=> {
-    console.log("catch");
+}).catch( (e)=> {
+    console.log("catch", e);
 });

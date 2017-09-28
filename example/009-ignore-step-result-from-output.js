@@ -39,7 +39,7 @@ let executionData = {
 
 execute(executionTree, executionData).then( (result)=> {
     console.log("finished with this result:");
-    console.log(result);
+    console.log(JSON.stringify(result, null, 2));
 }).catch( (e)=> {
     console.log("catch", e);
 });

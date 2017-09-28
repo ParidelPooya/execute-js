@@ -13,25 +13,21 @@ let executionTree = {
                 accessibleToNextSteps: true,
                 map: {
                     source: "from",
-                    destination: "different-node"
+                    destination: "different-node.subnode"
                 }
             }
         },
         {
             title:'step 2',
-            action: (data) => {return {b: 2};}
-        },
-        {
-            title:'step 3',
-            action: (data) => {return {c: 3};}
-        },
-        {
-            title:'step 4',
-            action: (data) => {return {d: 4};}
-        },
-        {
-            title:'step 5',
-            action: (data) => {return {e: 5};}
+            action: (data) => {return {from: {b: 2}} ;},
+            output: {
+                addToResult: true,
+                accessibleToNextSteps: true,
+                map: {
+                    source: "from",
+                    destination: "different-node.subnode"
+                }
+            }
         }
     ]
 };

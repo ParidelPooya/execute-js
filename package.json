@@ -1,13 +1,13 @@
 {
   "name": "execute-js",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Application workflow executor for JavaScript",
   "main": "lib/execute-js.min.js",
   "scripts": {
     "build": "webpack",
     "dev": "webpack --config webpack.dev.js --progress --colors --watch",
     "test": "lab -e qa -P test -l",
-    "coverage": "lab -e qa -P test -l -r html --coverage-exclude lib/homeseller-report/nqer/node_modules  --coverage-exclude migration/update-subscriptions/node_modules --coverage-exclude monitoring/unprocessed/node_modules -o ./test/coverage.html"
+    "coverage": "lab -e qa -P test -l -r html -o ./test/coverage.html"
   },
   "devDependencies": {
     "babel-cli": "6.24.1",

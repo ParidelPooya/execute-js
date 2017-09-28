@@ -14,7 +14,7 @@ const func = (data)=> {
 
 
 let executionTree = {
-    concurrency: 1,
+    concurrency: 2,
     steps :[
         {
             title:'step 1',
@@ -47,7 +47,7 @@ let executionData = {
 
 execute(executionTree, executionData).then( (result)=> {
     console.log("finished with this result:");
-    console.log(result);
+    console.log(JSON.stringify(result, null, 2));
 }).catch( ()=> {
     console.log("catch");
 });

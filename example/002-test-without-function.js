@@ -2,11 +2,16 @@
 
 let execute = require("../src/index");
 
+let executionData = {
+    Code: 'code1',
+    Type: 'type1'
+};
+
 let executionTree = [
     {
         id: 'step1',
         title:'step 1',
-        test: data => data.Code === 'code1',
+        test: executionData.Code === 'code1',
         if: {
             true:[
                 {
@@ -26,14 +31,9 @@ let executionTree = [
     }
 ];
 
-let executionData = {
-    Code: 'code1',
-    Type: 'type1'
-};
-
 execute(executionTree, executionData).then( (result)=> {
     console.log("finished with this result:");
-    console.log(result);
+    console.log(JSON.stringify(result, null, 2));
 }).catch( ()=> {
     console.log("catch");
 });
