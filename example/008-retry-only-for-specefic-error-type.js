@@ -20,7 +20,7 @@ let executionTree = {
             title:'step 1',
             retry: {
                 maxAttempts: 10,
-                tryCondition: (e) => e.errorCode==2 ? true : false
+                tryCondition: (e) => e.errorCode === 2 ? true : false
             },
             action: (data) => func({a: 1})
         }

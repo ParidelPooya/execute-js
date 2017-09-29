@@ -9,20 +9,23 @@ const DATA_KEY = Symbol.for("TinyCache.data");
 let globalSymbols = Object.getOwnPropertySymbols(global);
 let hasData = (globalSymbols.indexOf(DATA_KEY) > -1);
 
-if (!hasData){
+// $lab:coverage:off$
+if (!hasData) {
+// $lab:coverage:on$
     global[DATA_KEY] = {};
 }
+
 
 // define the singleton API
 // ------------------------
 let singleton = {
-    get: function(key){
+    get: function (key) {
         return global[DATA_KEY][key];
     },
-    has: function(key){
+    has: function (key) {
         return global[DATA_KEY][key] ? true : false;
     },
-    set: function(key, value){
+    set: function (key, value) {
         global[DATA_KEY][key] = value;
         return true;
     }

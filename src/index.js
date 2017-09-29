@@ -7,31 +7,34 @@ class Execute {
         let keys = key.split(".");
 
         for (let i = 0; i < keys.length; i++) {
-            if (typeof(obj.key) === "undefined") {
-                obj.key = {};
-            }
+            // if (typeof(obj.key) === "undefined") {
+            //     obj.key = {};
+            // }
             obj = obj[keys[i]];
         }
 
         return obj;
     }
+    
+    static addPrefixToPath(path, data) {
+        let obj = {};
+        let pointer = obj;
 
-    static copyToPath(sourceObj, sourcePath, data) {
-        let obj = sourceObj;
-        let keys = sourcePath.split(".");
+        let keys = path.split(".");
 
         for (let i = 0; i < keys.length; i++) {
-            if (typeof(obj[keys[i]]) === "undefined") {
-                obj[keys[i]] = {};
-            }
+            pointer[keys[i]] = {};
 
             if(i === keys.length -1){
-                obj[keys[i]] = data;
+                pointer[keys[i]] = data;
             } else {
-                obj = obj[keys[i]];
+                pointer = pointer[keys[i]];
             }
         }
+
+        return obj;
     }
+
 
     static spreadify(deepCopy) {
         return function(){
@@ -49,7 +52,7 @@ class Execute {
                 Object.keys(currentArg).map((key) => {
                     if (deepCopy &&
                         typeof(spreadArgs[key]) === "object" && spreadArgs[key] !== null &&
-                        typeof(currentArg[key]) === "object" && currentArg[key] !== null
+                        currentArg[key] !== null
 
                     ) {
                         spreadArgs[key] = Execute.spreadify(deepCopy)(spreadArgs[key], currentArg[key]);
@@ -126,7 +129,7 @@ class Execute {
 
         let _cacheSettings = Execute.spreadify()(
             Execute.sxecutionTreeDefaultSetting.steps[0].cache,
-            step.cache || {});
+            step.cache);
 
         if (_cacheSettings.enable) {
             let cacheKey = _cacheSettings.key(executionData);
@@ -167,7 +170,8 @@ class Execute {
                 let _result = {};
 
                 if (_output.map.destination.length !== 0){
-                    Execute.copyToPath(_result, _output.map.destination, Execute.getByPath(result, _output.map.source));
+                    _result = Execute.addPrefixToPath(_output.map.destination, Execute.getByPath(result, _output.map.source));
+                    // Execute.copyToPath(_result, _output.map.destination, Execute.getByPath(result, _output.map.source));
                 }
                 else {
                     _result = Execute.getByPath(result, _output.map.source);
@@ -190,7 +194,8 @@ class Execute {
                         _result = {};
 
                         if (_output.map.destination.length !== 0){
-                            Execute.copyToPath(_result, _output.map.destination, Execute.getByPath(totalResult, _output.map.source));
+                            _result = Execute.addPrefixToPath(_output.map.destination, Execute.getByPath(totalResult, _output.map.source));
+                            //Execute.copyToPath(_result, _output.map.destination, Execute.getByPath(totalResult, _output.map.source));
                         }
                         else {
                             _result = Execute.getByPath(totalResult, _output.map.source);
