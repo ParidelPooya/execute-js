@@ -1,9 +1,7 @@
-'use strict';
-
 let execute = require("../src/index");
 
 const func = (data)=> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
 
         setTimeout(()=> {
             console.log(data);
@@ -17,23 +15,23 @@ let executionTree = {
     concurrency: 2,
     steps :[
         {
-            title:'step 1',
+            title:"step 1",
             action: (data) => func({a: 1})
         },
         {
-            title:'step 2',
+            title:"step 2",
             action: (data) => func({b: 2})
         },
         {
-            title:'step 3',
+            title:"step 3",
             action: (data) => func({c: 3})
         },
         {
-            title:'step 4',
+            title:"step 4",
             action: (data) => func({d: 4})
         },
         {
-            title:'step 5',
+            title:"step 5",
             action: (data) => func({e: 5})
         }
     ]
@@ -48,6 +46,4 @@ let executionData = {
 execute(executionTree, executionData).then( (result)=> {
     console.log("finished with this result:");
     console.log(JSON.stringify(result, null, 2));
-}).catch( ()=> {
-    console.log("catch");
 });

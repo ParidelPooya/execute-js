@@ -1,5 +1,3 @@
-'use strict';
-
 let execute = require("../src/index");
 
 const func = (data)=> {
@@ -7,7 +5,7 @@ const func = (data)=> {
         if (Math.random() > 0.9) {
             resolve(data);
         } else {
-            reject({errorCode:1,errorMsg:'error'});
+            reject({errorCode:1,errorMsg:"error"});
         }
     });
 };
@@ -17,8 +15,8 @@ let executionTree = {
     concurrency: 1,
     steps :[
         {
-            title:'step 1',
-            retry: {
+            title:"step 1",
+            errorHandling: {
                 maxAttempts: 10,
                 tryCondition: (e) => e.errorCode === 2 ? true : false
             },

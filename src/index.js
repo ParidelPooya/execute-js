@@ -104,15 +104,15 @@ class Execute {
 
     executeStepActionWithRetry(step, executionData){
 
-        let _retry = Execute.spreadify()(
-            Execute.sxecutionTreeDefaultSetting.steps[0].retry ,
-            step.retry);
+        let _errorHandling = Execute.spreadify()(
+            Execute.sxecutionTreeDefaultSetting.steps[0].errorHandling ,
+            step.errorHandling);
 
         let action = Promise.resolve(step.action(executionData));
 
-        for(let i = 0; i < _retry.maxAttempts; i++) {
+        for(let i = 0; i < _errorHandling.maxAttempts; i++) {
             action = action.catch((e)=> {
-                if (_retry.tryCondition(e)){
+                if (_errorHandling.tryCondition(e)){
                     this._logger.info(`Step: ${step.title} try ${i+1} failed. Retrying...`);
                     return Promise.resolve(step.action(executionData));
                 }
@@ -285,7 +285,7 @@ Execute.sxecutionTreeDefaultSetting = {
     concurrency: 1,
     steps:[
         {
-            retry: {
+            errorHandling: {
                 maxAttempts: 0,
                 tryCondition: () => true
             },

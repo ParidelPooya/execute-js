@@ -1,5 +1,5 @@
 const lab = require("lab").script();
-const { expect, it } = exports.lab = lab;
+exports.lab = lab;
 
 let execute = require("../src/index");
 
@@ -25,7 +25,7 @@ lab.experiment("Basic Steps Test", () => {
             steps :[
                 {
                     title:"step 1",
-                    retry: {
+                    errorHandling: {
                         maxAttempts: 10
                     },
                     action: (data) => func({a: 1})
@@ -64,7 +64,7 @@ lab.experiment("Basic Steps Test", () => {
             steps :[
                 {
                     title:"step 1",
-                    retry: {
+                    errorHandling: {
                         maxAttempts: 10,
                         tryCondition: (e) => e.errorCode === 2 ? true : false
                     },
@@ -77,8 +77,8 @@ lab.experiment("Basic Steps Test", () => {
             sub_id :123
         };
 
-        return execute(executionTree, executionData).then( (result)=> {
-        }).catch( (e)=> {
+        return execute(executionTree, executionData).then( ()=> {
+        }).catch( ()=> {
             lab.expect(retryCount).to.equal(1);
         });
     });

@@ -1,15 +1,13 @@
-'use strict';
-
 let execute = require("../src/index");
 
 let executionTree = {
     concurrency: 1,
     steps :[
         {
-            title:'step 1'
+            title:"step 1"
         },
         {
-            title:'step 2'
+            title:"step 2"
         }
     ]
 };

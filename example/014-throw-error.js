@@ -1,28 +1,25 @@
-'use strict';
-
 let execute = require("../src/index");
 
 let executionTree = [
     {
-        id: 'step1',
-        title:'step 1',
+        id: "step1",
+        title:"step 1",
         action: (data)=> {return {a: 1};},
-        test: data => data.Code === 'code1',
+        test: data => data.Code === "code1",
         if: {
             true:[
                 {
-                    id: 'step2',
-                    title:'step 2',
+                    id: "step2",
+                    title:"step 2",
                     action: (data)=> {return {b: 2};},
-                    test: data => data.Type === 'type1',
+                    test: data => data.Type === "type1",
                     if: {
                         true: [
                             {
-                                id: 'step3',
-                                title:'step 3',
+                                id: "step3",
+                                title:"step 3",
                                 action: (data)=> {
-                                    throw {name:"UserException", message:"Error"}
-                                    return {c: 3};
+                                    throw {name:"UserException", message:"Error"};
                                 }
                             }
                         ]
@@ -34,8 +31,8 @@ let executionTree = [
 ];
 
 let executionData = {
-    Code: 'code1',
-    Type: 'type1'
+    Code: "code1",
+    Type: "type1"
 };
 
 execute(executionTree, executionData).then( (result)=> {

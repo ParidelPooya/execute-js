@@ -1,5 +1,5 @@
 const lab = require("lab").script();
-const { expect, it } = exports.lab = lab;
+exports.lab = lab;
 
 let execute = require("../src/index");
 

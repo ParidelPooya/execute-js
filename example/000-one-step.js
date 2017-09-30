@@ -1,13 +1,11 @@
-'use strict';
-
 let execute = require("../src/index");
 
 let executionTree = [
-        {
-            title:'step 1',
-            action: (data) => {return {a: 1};}
-        }
-    ];
+    {
+        title: "step 1",
+        action: (data) => {return {a: 1};}
+    }
+];
 
 
 

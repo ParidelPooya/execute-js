@@ -1,12 +1,10 @@
-'use strict';
-
 let execute = require("../src/index");
 
 let executionTree = {
     concurrency: 1,
     steps :[
         {
-            title:'step 1',
+            title:"step 1",
             action: (data) => {return {a: 1};},
             output: {
                 addToResult: false,
@@ -14,19 +12,19 @@ let executionTree = {
             }
         },
         {
-            title:'step 2',
+            title:"step 2",
             action: (data) => {return {b: 2};}
         },
         {
-            title:'step 3',
+            title:"step 3",
             action: (data) => {return {c: 3};}
         },
         {
-            title:'step 4',
+            title:"step 4",
             action: (data) => {return {d: 4};}
         },
         {
-            title:'step 5',
+            title:"step 5",
             action: (data) => {
                 console.log("a:", data.a); // this line should log undefined because of accessibleToNextSteps: false
                 return {e: 5};
@@ -44,6 +42,4 @@ let executionData = {
 execute(executionTree, executionData).then( (result)=> {
     console.log("finished with this result:");
     console.log(JSON.stringify(result, null, 2));
-}).catch( (e)=> {
-    console.log("catch", e);
 });

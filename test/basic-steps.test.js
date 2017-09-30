@@ -1,11 +1,11 @@
 const lab = require("lab").script();
-const { expect, it } = exports.lab = lab;
+exports.lab = lab;
 
 let execute = require("../src/index");
 
 lab.experiment("Basic Steps Test", () => {
 
-    lab.test("returns step output when there is only one step", () => {
+    lab.test("returns step coverage when there is only one step", () => {
         let executionTree = [
             {
                 title:"step 1",
@@ -21,7 +21,7 @@ lab.experiment("Basic Steps Test", () => {
         });
     });
 
-    lab.test("returns all steps output when there is multiple steps", () => {
+    lab.test("returns all steps coverage when there is multiple steps", () => {
         let executionTree = [
             {
                 title:"step 1",

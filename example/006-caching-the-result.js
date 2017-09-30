@@ -1,9 +1,7 @@
-'use strict';
-
 let execute = require("../src/index");
 
 const func = (data)=> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
 
         setTimeout(()=> {
             console.log(data);
@@ -23,27 +21,27 @@ let executionTree = {
     steps :[
         {
             cache: cacheOptions,
-            title:'step 1',
+            title:"step 1",
             action: (data) => func({a: 1})
         },
         {
             cache: cacheOptions,
-            title:'step 2',
+            title:"step 2",
             action: (data) => func({b: 2})
         },
         {
             cache: cacheOptions,
-            title:'step 3',
+            title:"step 3",
             action: (data) => func({c: 3})
         },
         {
             cache: cacheOptions,
-            title:'step 4',
+            title:"step 4",
             action: (data) => func({d: 4})
         },
         {
             cache: cacheOptions,
-            title:'step 5',
+            title:"step 5",
             action: (data) => func({e: 5})
         }
     ]

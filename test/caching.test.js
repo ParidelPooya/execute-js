@@ -1,5 +1,5 @@
 const lab = require("lab").script();
-const { expect, it } = exports.lab = lab;
+exports.lab = lab;
 
 let execute = require("../src/index");
 
@@ -7,7 +7,7 @@ lab.experiment("Caching Test", () => {
 
     lab.test("the result should be {a:1} because of caching", () => {
         const func = (data)=> {
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
 
                 setTimeout(()=> {
                     console.log(data);
