@@ -68,10 +68,7 @@ class Execute {
             cache: require("./tiny-cache")
         };
 
-        let _options = Execute.spreadify()(defaultOption, options);
-
-        this._logger = _options.logger;
-        this._cache = _options.cache;
+        this._options = Execute.spreadify()(defaultOption, options);
     }
 
     static run(executionTree, executionData, options) {
@@ -86,7 +83,7 @@ class Execute {
             ? step.test(executionData) // call the test with the results from the action
             : step.test;
 
-        this._logger.info(`Test result: ${testResult}`);
+        this._options.logger.info(`Test result: ${testResult}`);
         // get a reference to the next step based on the test result
         const nextStep = step.if[testResult] || step.if.default;
 
@@ -97,13 +94,13 @@ class Execute {
     }
 
     executeStepActionWithRetry(step, executionData) {
-        let action = Promise.resolve(step.action(executionData));
+        let action = Promise.resolve(step.action(executionData, this._options));
 
         for (let i = 0; i < step.errorHandling.maxAttempts; i++) {
             action = action.catch((e) => {
                 if (step.errorHandling.tryCondition(e)) {
-                    this._logger.info(`Step: ${step.title} try ${i + 1} failed. Retrying...`);
-                    return Promise.resolve(step.action(executionData));
+                    this._options.logger.info(`Step: ${step.title} try ${i + 1} failed. Retrying...`);
+                    return Promise.resolve(step.action(executionData, this._options));
                 }
 
                 return Promise.reject(e);
@@ -115,14 +112,14 @@ class Execute {
     executeStepActionWithCache(step, executionData) {
         if (step.cache.enable) {
             let cacheKey = step.cache.key(executionData);
-            return Promise.resolve(this._cache.has(cacheKey))
+            return Promise.resolve(this._options.cache.has(cacheKey))
                 .then((hasData) => {
                     console.log("Has Data:", hasData);
                     if (hasData) {
-                        return Promise.resolve(this._cache.get(cacheKey));
+                        return Promise.resolve(this._options.cache.get(cacheKey));
                     } else {
                         return this.executeStepActionWithRetry(step, executionData).then((data) => {
-                            return Promise.resolve(this._cache.set(cacheKey, data, step.cache.ttl)).then((set_result) => {
+                            return Promise.resolve(this._options.cache.set(cacheKey, data, step.cache.ttl)).then((set_result) => {
                                 console.log("Set Data in Cache result:", set_result);
                                 return Promise.resolve(data);
                             });
@@ -148,7 +145,7 @@ class Execute {
         let _step = Execute.spreadify(true)(Execute.sxecutionTreeDefaultSetting.steps[0], step);
         let allData = Execute.spreadify()(executionData, {});
 
-        this._logger.info(`Step: ${_step.title}`);
+        this._options.logger.info(`Step: ${_step.title}`);
 
         return new Promise((resolve, reject) => {
 
@@ -167,7 +164,7 @@ class Execute {
                     _result = Execute.getByPath(result, _output.map.source);
                 }
 
-                this._logger.info(`Action result: ${JSON.stringify(_result)}`);
+                this._options.logger.info(`Action result: ${JSON.stringify(_result)}`);
 
                 if (_output.accessibleToNextSteps) {
                     allData = Execute.spreadify()(allData, _result);
@@ -177,7 +174,7 @@ class Execute {
                 // so pass the promise response to goToNextStep
                 if ("test" in _step) {
                     this.goToNextStep(_step, allData).then((childResult) => {
-                        this._logger.info(`Child result: ${JSON.stringify(childResult)}`);
+                        this._options.logger.info(`Child result: ${JSON.stringify(childResult)}`);
 
                         let totalResult = Execute.spreadify(true)(result, childResult);
 
@@ -190,7 +187,7 @@ class Execute {
                             _result = Execute.getByPath(totalResult, _output.map.source);
                         }
 
-                        this._logger.info(`Total result: ${JSON.stringify(_result)}`);
+                        this._options.logger.info(`Total result: ${JSON.stringify(_result)}`);
 
                         resolve(_result);
                     }).catch((e) => {
