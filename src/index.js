@@ -7,15 +7,12 @@ class Execute {
         let keys = key.split(".");
 
         for (let i = 0; i < keys.length; i++) {
-            // if (typeof(obj.key) === "undefined") {
-            //     obj.key = {};
-            // }
             obj = obj[keys[i]];
         }
 
         return obj;
     }
-    
+
     static addPrefixToPath(path, data) {
         let obj = {};
         let pointer = obj;
@@ -25,7 +22,7 @@ class Execute {
         for (let i = 0; i < keys.length; i++) {
             pointer[keys[i]] = {};
 
-            if(i === keys.length -1){
+            if (i === keys.length - 1) {
                 pointer[keys[i]] = data;
             } else {
                 pointer = pointer[keys[i]];
@@ -37,7 +34,7 @@ class Execute {
 
 
     static spreadify(deepCopy) {
-        return function(){
+        return function () {
             // Holds the processed arguments for use by `fn`
             let spreadArgs = {};
 
@@ -84,7 +81,7 @@ class Execute {
         return execute.processSteps(executionTree, executionData);
     }
 
-    goToNextStep(step, executionData){
+    goToNextStep(step, executionData) {
         const testResult = typeof step.test === "function"
             ? step.test(executionData) // call the test with the results from the action
             : step.test;
@@ -93,54 +90,39 @@ class Execute {
         // get a reference to the next step based on the test result
         const nextStep = step.if[testResult] || step.if.default;
 
-        if (!nextStep) {
-            // TODO: better handeling if the next step is missing.
-            return Promise.reject("Unhandled scenario");
-        } else {
-            // move on to the next step down the tree
-            return this.processSteps(nextStep, executionData);
-        }
+        // TODO: better handeling if the next step is missing.
+        return nextStep ?
+            this.processSteps(nextStep, executionData) :
+            Promise.reject("Unhandled scenario");
     }
 
-    executeStepActionWithRetry(step, executionData){
-
-        let _errorHandling = Execute.spreadify()(
-            Execute.sxecutionTreeDefaultSetting.steps[0].errorHandling ,
-            step.errorHandling);
-
+    executeStepActionWithRetry(step, executionData) {
         let action = Promise.resolve(step.action(executionData));
 
-        for(let i = 0; i < _errorHandling.maxAttempts; i++) {
-            action = action.catch((e)=> {
-                if (_errorHandling.tryCondition(e)){
-                    this._logger.info(`Step: ${step.title} try ${i+1} failed. Retrying...`);
+        for (let i = 0; i < step.errorHandling.maxAttempts; i++) {
+            action = action.catch((e) => {
+                if (step.errorHandling.tryCondition(e)) {
+                    this._logger.info(`Step: ${step.title} try ${i + 1} failed. Retrying...`);
                     return Promise.resolve(step.action(executionData));
                 }
-                else {
-                    return Promise.reject(e);
-                }
+
+                return Promise.reject(e);
             });
         }
-
         return action;
     }
 
-    executeStepActionWithCache(step, executionData){
-
-        let _cacheSettings = Execute.spreadify()(
-            Execute.sxecutionTreeDefaultSetting.steps[0].cache,
-            step.cache);
-
-        if (_cacheSettings.enable) {
-            let cacheKey = _cacheSettings.key(executionData);
+    executeStepActionWithCache(step, executionData) {
+        if (step.cache.enable) {
+            let cacheKey = step.cache.key(executionData);
             return Promise.resolve(this._cache.has(cacheKey))
-                .then((hasData)=> {
+                .then((hasData) => {
                     console.log("Has Data:", hasData);
                     if (hasData) {
                         return Promise.resolve(this._cache.get(cacheKey));
                     } else {
-                        return this.executeStepActionWithRetry(step, executionData).then((data)=> {
-                            return Promise.resolve(this._cache.set(cacheKey, data, _cacheSettings.ttl)).then((set_result)=> {
+                        return this.executeStepActionWithRetry(step, executionData).then((data) => {
+                            return Promise.resolve(this._cache.set(cacheKey, data, step.cache.ttl)).then((set_result) => {
                                 console.log("Set Data in Cache result:", set_result);
                                 return Promise.resolve(data);
                             });
@@ -152,16 +134,25 @@ class Execute {
         }
     }
 
-    processStep(step, executionData){
+    executeStepActionAndHandleError(step, executionData) {
+        return this.executeStepActionWithCache(step, executionData)
+            .catch((e) => {
+                return step.errorHandling.continueOnError ?
+                    Promise.resolve(step.errorHandling.onErrorResponse) :
+                    Promise.reject(e);
+            });
+    }
 
-        let _step = Execute.spreadify()(Execute.sxecutionTreeDefaultSetting.steps[0], step);
+    processStep(step, executionData) {
+
+        let _step = Execute.spreadify(true)(Execute.sxecutionTreeDefaultSetting.steps[0], step);
         let allData = Execute.spreadify()(executionData, {});
 
         this._logger.info(`Step: ${_step.title}`);
 
         return new Promise((resolve, reject) => {
 
-            this.executeStepActionWithCache(_step, executionData).then( (result) => {
+            this.executeStepActionAndHandleError(_step, executionData).then((result) => {
 
                 let _output = Execute.spreadify(true)(
                     Execute.sxecutionTreeDefaultSetting.steps[0].output,
@@ -169,9 +160,8 @@ class Execute {
 
                 let _result = {};
 
-                if (_output.map.destination.length !== 0){
+                if (_output.map.destination.length !== 0) {
                     _result = Execute.addPrefixToPath(_output.map.destination, Execute.getByPath(result, _output.map.source));
-                    // Execute.copyToPath(_result, _output.map.destination, Execute.getByPath(result, _output.map.source));
                 }
                 else {
                     _result = Execute.getByPath(result, _output.map.source);
@@ -193,46 +183,37 @@ class Execute {
 
                         _result = {};
 
-                        if (_output.map.destination.length !== 0){
+                        if (_output.map.destination.length !== 0) {
                             _result = Execute.addPrefixToPath(_output.map.destination, Execute.getByPath(totalResult, _output.map.source));
-                            //Execute.copyToPath(_result, _output.map.destination, Execute.getByPath(totalResult, _output.map.source));
                         }
                         else {
                             _result = Execute.getByPath(totalResult, _output.map.source);
                         }
 
-                        /*
-                        if (_output.copyResultToDifferentNode !== null) {
-                            _result[_output.copyResultToDifferentNode] = Execute.spreadify()(result, childResult);
-                        } else {
-                            _result = Execute.spreadify()(result, childResult);
-                        }
-                        */
-
                         this._logger.info(`Total result: ${JSON.stringify(_result)}`);
 
                         resolve(_result);
-                    }).catch((e)=>{
+                    }).catch((e) => {
                         reject(e);
                     });
                 } else {
                     resolve(_result);
                 }
-            }).catch( (e)=> {
+            }).catch((e) => {
                 reject(e);
             });
 
         });
     }
 
-    processSteps(executionTree, executionData){
+    processSteps(executionTree, executionData) {
 
         let _executionTree;
 
-        if( Object.prototype.toString.call( executionTree ) === "[object Array]" ) {
+        if (Object.prototype.toString.call(executionTree) === "[object Array]") {
             // if executionTree is array then we need to convert it to proper object with all missing properties.
             _executionTree = {
-                steps : executionTree
+                steps: executionTree
             };
         } else {
             _executionTree = executionTree;
@@ -283,11 +264,13 @@ class Execute {
 // Because static keyword works only for method
 Execute.sxecutionTreeDefaultSetting = {
     concurrency: 1,
-    steps:[
+    steps: [
         {
             errorHandling: {
                 maxAttempts: 0,
-                tryCondition: () => true
+                tryCondition: () => true,
+                continueOnError: false,
+                onErrorResponse: {}
             },
             cache: {
                 enable: false,
@@ -301,7 +284,9 @@ Execute.sxecutionTreeDefaultSetting = {
                     destination: ""
                 }
             },
-            action: () => {return {};}
+            action: () => {
+                return {};
+            }
         }
     ]
 };
