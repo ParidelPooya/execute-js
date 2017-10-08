@@ -1,0 +1,47 @@
+# Execute-js
+
+
+> Decision tree executor and more for JavaScript
+
+TODO: Fill out this long description.
+
+## Table of Contents
+
+- [Install](#install)
+- [Usage](#usage)
+- [API](#api)
+- [Maintainers](#maintainers)
+- [Contribute](#contribute)
+- [License](#license)
+
+## Install
+
+```bash
+npm install --save execute-js
+```
+
+## Usage
+
+```js
+```
+
+## API
+TODO: Fill out API specification.
+
+## Middleware
+You can use middleware to add new feature to execute-js.
+
+```js
+```
+
+## Maintainers
+
+[@paridelpooya](https://github.com/paridelpooya)
+
+## Contribute
+
+PRs accepted.
+
+## License
+
+MIT © 2017 Pooya Paridel

@@ -8,7 +8,8 @@
     "dev": "webpack --config webpack.dev.js --progress --colors --watch",
     "test": "lab -e qa -P test -l",
     "coverage": "lab -e qa -P test -l -r html -o ./coverage/index.html",
-    "eslint": "eslint ./ --config .eslintrc"
+    "eslint": "eslint ./ --config .eslintrc",
+    "coverall": "lab -r lcov | ./node_modules/.bin/coveralls"
   },
   "devDependencies": {
     "babel-cli": "6.24.1",
@@ -18,6 +19,7 @@
     "babel-plugin-add-module-exports": "0.2.1",
     "babel-preset-es2015": "6.24.1",
     "code": "^5.1.0",
+    "coveralls": "^3.0.0",
     "eslint": "3.19.0",
     "eslint-loader": "1.7.1",
     "lab": "^14.3.1",
