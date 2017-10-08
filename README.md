@@ -1,6 +1,8 @@
 # Execute-js
 [![Build Status](https://travis-ci.org/ParidelPooya/execute-js.svg?branch=master)](https://travis-ci.org/ParidelPooya/execute-js)
 [![Coverage Status](https://coveralls.io/repos/github/ParidelPooya/execute-js/badge.svg?branch=master)](https://coveralls.io/github/ParidelPooya/execute-js?branch=master)
+[![npm](https://img.shields.io/npm/v/execute-js.svg)](https://www.npmjs.com/package/execute-js)
+[![license](https://img.shields.io/github/license/paridelpooya/execute-js.svg)](https://github.com/ParidelPooya/execute-js/blob/master/LICENSE)
 
 > Decision tree executor and more for JavaScript
 
