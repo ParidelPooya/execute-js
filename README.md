@@ -1,5 +1,5 @@
 # Execute-js
-
+[![Coverage Status](https://coveralls.io/repos/github/ParidelPooya/execute-js/badge.svg?branch=master)](https://coveralls.io/github/ParidelPooya/execute-js?branch=master)
 
 > Decision tree executor and more for JavaScript
 

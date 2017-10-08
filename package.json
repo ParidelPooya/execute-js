@@ -9,7 +9,7 @@
     "test": "lab -e qa -P test -l",
     "coverage": "lab -e qa -P test -l -r html -o ./coverage/index.html",
     "eslint": "eslint ./ --config .eslintrc",
-    "coverall": "lab -r lcov | ./node_modules/.bin/coveralls"
+    "test-with-coverage": "lab -r lcov | ./node_modules/.bin/coveralls"
   },
   "devDependencies": {
     "babel-cli": "6.24.1",
