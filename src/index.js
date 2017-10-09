@@ -77,6 +77,32 @@ class Execute {
         return Promise.resolve(action(executionData, options));
     }
 
+    use(middleware) {
+        if(!middleware.type) {
+            throw new Error("type is missing in middleware contract");
+        }
+
+        switch(middleware.type) {
+            case "action":
+                return this.addActionMiddleware(middleware);
+            default:
+                throw new Error("Unknown middleware type");
+        }
+    }
+
+    addActionMiddleware(middleware) {
+        if(!middleware.action) {
+            throw new Error("middleware action is missing");
+        }
+
+        if(!middleware.name) {
+            throw new Error("middleware name is missing");
+        }
+
+        this._actions[middleware.name] = middleware.action;
+        return true;
+    }
+
     run(executionTree, executionData) {
         return this.processSteps(executionTree, executionData);
     }
