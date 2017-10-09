@@ -1,7 +1,7 @@
 const lab = require("lab").script();
 exports.lab = lab;
 
-let execute = require("../src/index");
+let Execute = require("../src/index");
 
 lab.experiment("Changing Output Tests", () => {
 
@@ -47,8 +47,8 @@ lab.experiment("Changing Output Tests", () => {
         let executionData = {
             sub_id :123
         };
-
-        return execute(executionTree, executionData).then( (result)=> {
+        let execute = new Execute();
+        return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.differentNode.subnode.a).to.equal(1);
             lab.expect(result.differentNode.subnode.a).to.equal(2);
             lab.expect(result.c).to.be.undefined();
@@ -114,8 +114,8 @@ lab.experiment("Changing Output Tests", () => {
         let executionData = {
             sub_id :123
         };
-
-        return execute(executionTree, executionData).then( (result)=> {
+        let execute = new Execute();
+        return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.differentNode.subnode.a).to.equal(1);
             lab.expect(result.differentNode.subnode.a).to.equal(2);
             lab.expect(result.c).to.be.undefined();

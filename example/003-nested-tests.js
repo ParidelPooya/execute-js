@@ -1,4 +1,4 @@
-let execute = require("../src/index");
+let Execute = require("../src/index");
 
 let executionTree = [
     {
@@ -33,7 +33,8 @@ let executionData = {
     Type: "type1"
 };
 
-execute(executionTree, executionData).then( (result)=> {
+let execute = new Execute();
+execute.run (executionTree, executionData).then( (result)=> {
     console.log("finished with this result:");
     console.log(JSON.stringify(result, null, 2));
 });

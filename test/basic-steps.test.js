@@ -1,7 +1,7 @@
 const lab = require("lab").script();
 exports.lab = lab;
 
-let execute = require("../src/index");
+let Execute = require("../src/index");
 
 lab.experiment("Basic Steps Test", () => {
 
@@ -15,8 +15,8 @@ lab.experiment("Basic Steps Test", () => {
         let executionData = {
             sub_id :123
         };
-
-        return execute(executionTree, executionData).then( (result)=> {
+        let execute = new Execute();
+        return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.a).to.equal(1);
         });
     });
@@ -47,8 +47,8 @@ lab.experiment("Basic Steps Test", () => {
         let executionData = {
             sub_id :123
         };
-
-        return execute(executionTree, executionData).then( (result)=> {
+        let execute = new Execute();
+        return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.a).to.equal(1);
             lab.expect(result.b).to.equal(2);
             lab.expect(result.c).to.equal(3);
@@ -71,10 +71,9 @@ lab.experiment("Basic Steps Test", () => {
         let executionData = {
             sub_id :123
         };
-
-        return execute(executionTree, executionData).then( (result)=> {
+        let execute = new Execute();
+        return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.a).to.equal(2);
-
         });
     });
 
@@ -92,8 +91,8 @@ lab.experiment("Basic Steps Test", () => {
         let executionData = {
             sub_id :123
         };
-
-        return execute(executionTree, executionData).then( (result)=> {
+        let execute = new Execute();
+        return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.a).to.equal(null);
 
         });
@@ -113,8 +112,8 @@ lab.experiment("Basic Steps Test", () => {
         let executionData = {
             sub_id :123
         };
-
-        return execute(executionTree, executionData).then( (result)=> {
+        let execute = new Execute();
+        return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.a.x).to.equal(1);
 
         });
@@ -134,8 +133,8 @@ lab.experiment("Basic Steps Test", () => {
         let executionData = {
             sub_id :123
         };
-
-        return execute(executionTree, executionData).then( (result)=> {
+        let execute = new Execute();
+        return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.a.x).to.equal(1);
             lab.expect(result.a.y).to.equal(1);
 
@@ -173,8 +172,8 @@ lab.experiment("Basic Steps Test", () => {
             }
         ];
 
-
-        return execute(executionTree, executionData).then( (result)=> {
+        let execute = new Execute();
+        return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.b).to.equal(null);
         }).catch( ()=> {
 
