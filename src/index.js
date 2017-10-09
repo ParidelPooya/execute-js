@@ -32,7 +32,6 @@ class Execute {
         return obj;
     }
 
-
     static spreadify(deepCopy) {
         return function () {
             // Holds the processed arguments for use by `fn`
@@ -68,14 +67,18 @@ class Execute {
             cache: require("./tiny-cache")
         };
 
-        this._options = Execute.spreadify()(defaultOption, options);
+        this._actions = {
+            default: Execute.defaultAction
+        };
+        this._options = Execute.spreadify()(defaultOption, options || {});
     }
 
-    static run(executionTree, executionData, options) {
+    static defaultAction(action, executionData, options) {
+        return Promise.resolve(action(executionData, options));
+    }
 
-        let execute = new Execute(options ? options : {});
-
-        return execute.processSteps(executionTree, executionData);
+    run(executionTree, executionData) {
+        return this.processSteps(executionTree, executionData);
     }
 
     goToNextStep(step, executionData) {
@@ -94,7 +97,7 @@ class Execute {
     }
 
     executeStepActionWithRetry(step, executionData) {
-        let action = Promise.resolve(step.action(executionData, this._options));
+        let action = this._actions[step.actionType](step.action, executionData, this._options);
 
         for (let i = 0; i < step.errorHandling.maxAttempts; i++) {
             action = action.catch((e) => {
@@ -281,6 +284,7 @@ Execute.sxecutionTreeDefaultSetting = {
                     destination: ""
                 }
             },
+            actionType: "default",
             action: () => {
                 return {};
             }
@@ -288,4 +292,4 @@ Execute.sxecutionTreeDefaultSetting = {
     ]
 };
 
-module.exports = Execute.run;
+module.exports = Execute;

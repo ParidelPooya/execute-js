@@ -1,7 +1,7 @@
 const lab = require("lab").script();
 exports.lab = lab;
 
-let execute = require("../src/index");
+let Execute = require("../src/index");
 
 lab.experiment("Condition Test", () => {
 
@@ -34,8 +34,8 @@ lab.experiment("Condition Test", () => {
             Code: "code1",
             Type: "type1"
         };
-
-        return execute(executionTree, executionData).then( (result)=> {
+        let execute = new Execute();
+        return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.b).to.equal(2);
         }).catch( ()=> {
 
@@ -64,8 +64,8 @@ lab.experiment("Condition Test", () => {
             Code: "code1",
             Type: "type1"
         };
-
-        return execute(executionTree, executionData).then( (result)=> {
+        let execute = new Execute();
+        return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.b).to.equal(2);
         }).catch( ()=> {
 
@@ -88,8 +88,8 @@ lab.experiment("Condition Test", () => {
             Code: "code1",
             Type: "type1"
         };
-
-        return execute(executionTree, executionData).then( ()=> {
+        let execute = new Execute();
+        return execute.run(executionTree, executionData).then( ()=> {
         }).catch( (e)=> {
             lab.expect(e).to.equal("Unhandled scenario");
         });
@@ -126,8 +126,8 @@ lab.experiment("Condition Test", () => {
             }
         ];
 
-
-        return execute(executionTree, executionData).then( (result)=> {
+        let execute = new Execute();
+        return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.b).to.equal(2);
         }).catch( ()=> {
 
