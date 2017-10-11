@@ -5,7 +5,7 @@
 [![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/execute-js)
 [![license](https://img.shields.io/github/license/paridelpooya/execute-js.svg)](https://github.com/ParidelPooya/execute-js/blob/master/LICENSE)
 
-> Decision tree executor and more for JavaScript
+> Application workflow executor for JavaScrip
 
 TODO: Fill out this long description.
 
