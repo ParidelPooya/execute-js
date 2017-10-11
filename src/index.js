@@ -67,14 +67,42 @@ class Execute {
             cache: require("./tiny-cache")
         };
 
+        // Add all action handlers
         this._actions = {
-            default: Execute.defaultAction
+            "default": Execute.defaultAction.bind(this),
+            "map": Execute.mapActionHandler.bind(this)
         };
+
         this._options = Execute.spreadify()(defaultOption, options || {});
     }
 
     static defaultAction(action, executionData, options) {
         return Promise.resolve(action(executionData, options));
+    }
+
+    static mapActionHandler(action, executionData, options) {
+        /*
+            action should be object with
+            {
+                array: function that produce an array,
+                reducer: child step to execute for each element in the array.
+            }
+         */
+        let final = [];
+
+        return action.array(executionData).reduce((promise, item) => {
+            return promise
+                .then(() => {
+                    return Promise
+                        .resolve(action.reducer(item, options))
+                        .then(result => {
+                            final.push(result);
+                            return final;
+                        });
+                })
+                .catch(console.error);
+
+        }, Promise.resolve());
     }
 
     use(middleware) {
