@@ -8,7 +8,7 @@ let executionTree = [
     {
         title: "step 2",
         action: (data) => {return {b: 2};},
-        test: (data) => data.type === 3,
+        test: (data) => data.type === 2,
         if: {
             true: [
                 {

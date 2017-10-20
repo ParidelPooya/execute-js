@@ -8,7 +8,7 @@ let executionTree = [
     {
         title: "step 2",
         action: (data) => {return {b: 2};},
-        test: (data) => data.sub_id === 124,
+        test: (data) => data.sub_id === 123,
         if: {
             true: Execute.executionMode.STOP_LEVEL_EXECUTION,
             false: Execute.executionMode.CONTINUE
