@@ -142,7 +142,7 @@ class Execute {
 
         this._options.logger.info(`Test result: ${testResult}`);
         // get a reference to the next step based on the test result
-        const nextStep = step.if[testResult] || step.if.default;
+        const nextStep = typeof(step.if[testResult]) !=="undefined" ? step.if[testResult] : step.if.default;
 
         if (typeof(nextStep) === "number") {
             // next step is not an execution tree but a predefined signal
@@ -159,6 +159,7 @@ class Execute {
     executeStepActionWithRetry(step, executionData) {
         let action = this._actions[step.actionType](step.action, executionData, this._options);
 
+        // TODO: Dynamic retry handleing instead of building the chain of catch
         for (let i = 0; i < step.errorHandling.maxAttempts; i++) {
             action = action.catch((e) => {
                 if (step.errorHandling.tryCondition(e)) {
@@ -283,6 +284,9 @@ class Execute {
 
         let allData = Execute.spreadify()(executionData, {});
 
+        let i = 0;
+        let listOfPromises = [];
+
         let ps = [];
         _executionTree.steps.map((step) => {
 
@@ -316,20 +320,21 @@ class Execute {
             });
         });
 
-        let i = 0;
-
         function doNextAction() {
-            if (i < ps.length) {
+            if (i < ps.length && finalSignal === Execute.executionMode.CONTINUE) {
                 return ps[i++]().then(doNextAction);
             }
         }
 
-        let listOfPromises = [];
         while (i < _executionTree.concurrency && i < ps.length) {
             listOfPromises.push(doNextAction());
         }
         return Promise.all(listOfPromises).then(() => {
-            return {result: finalResult, signal: finalSignal};
+            return {
+                result: finalResult,
+                signal: finalSignal === Execute.executionMode.STOP_ENTIRE_EXECUTION ?
+                    finalResult : Execute.executionMode.CONTINUE
+            };
         });
 
     }
