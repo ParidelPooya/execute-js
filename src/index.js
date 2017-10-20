@@ -106,11 +106,11 @@ class Execute {
     }
 
     use(middleware) {
-        if(!middleware.type) {
+        if (!middleware.type) {
             throw new Error("type is missing in middleware contract");
         }
 
-        switch(middleware.type) {
+        switch (middleware.type) {
             case "action":
                 return this.addActionMiddleware(middleware);
             default:
@@ -119,11 +119,11 @@ class Execute {
     }
 
     addActionMiddleware(middleware) {
-        if(!middleware.action) {
+        if (!middleware.action) {
             throw new Error("middleware action is missing");
         }
 
-        if(!middleware.name) {
+        if (!middleware.name) {
             throw new Error("middleware name is missing");
         }
 
@@ -144,7 +144,7 @@ class Execute {
         // get a reference to the next step based on the test result
         const nextStep = step.if[testResult] || step.if.default;
 
-        if( typeof(nextStep) === "number") {
+        if (typeof(nextStep) === "number") {
             // next step is not an execution tree but a predefined signal
             return Promise.resolve({result: {}, signal: nextStep});
         }
@@ -282,7 +282,6 @@ class Execute {
         let finalSignal = Execute.executionMode.CONTINUE;
 
         let allData = Execute.spreadify()(executionData, {});
-        let throttleActions = require("./throttle-actions");
 
         let ps = [];
         _executionTree.steps.map((step) => {
@@ -292,32 +291,46 @@ class Execute {
                 step);
 
             ps.push(() => {
-                return this.processStep(step, allData).then((response) => {
+                return this.processStep(step, allData)
+                    .then(response => {
+                        finalSignal = Math.max(finalSignal, response.signal);
 
-                    finalSignal = Math.max(finalSignal, response.signal);
+                        let _output = Execute.spreadify()(
+                            Execute.executionTreeDefaultSetting.steps[0].output,
+                            _step.output);
 
-                    let _output = Execute.spreadify()(
-                        Execute.executionTreeDefaultSetting.steps[0].output,
-                        _step.output);
+                        if (_output.accessibleToNextSteps) {
+                            allData = Execute.spreadify()(allData, response.result);
+                        }
 
-                    if (_output.accessibleToNextSteps) {
-                        allData = Execute.spreadify()(allData, response.result);
-                    }
+                        let _stepResult = {};
 
-                    let _stepResult = {};
+                        if (_output.addToResult) {
+                            _stepResult = response.result;
+                        }
 
-                    if (_output.addToResult) {
-                        _stepResult = response.result;
-                    }
+                        finalResult = Execute.spreadify(true)(finalResult, _stepResult);
 
-                    finalResult = Execute.spreadify(true)(finalResult, _stepResult);
-
-                    return {result: finalResult, signal: finalSignal};
-                });
+                        return {result: finalResult, signal: finalSignal};
+                    });
             });
         });
 
-        return throttleActions(ps, _executionTree.concurrency).then(() => { return {result: finalResult, signal: finalSignal};});
+        let i = 0;
+
+        function doNextAction() {
+            if (i < ps.length) {
+                return ps[i++]().then(doNextAction);
+            }
+        }
+
+        let listOfPromises = [];
+        while (i < _executionTree.concurrency && i < ps.length) {
+            listOfPromises.push(doNextAction());
+        }
+        return Promise.all(listOfPromises).then(() => {
+            return {result: finalResult, signal: finalSignal};
+        });
 
     }
 
