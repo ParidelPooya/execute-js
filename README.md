@@ -14,7 +14,7 @@ configuring the setting.
 
 ## Table of Contents
 
-- [Features] (#features)
+- [Features](#features)
 - [Install](#install)
 - [Usage](#usage)
 - [API](#api)
