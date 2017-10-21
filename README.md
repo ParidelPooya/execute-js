@@ -77,12 +77,59 @@ let execute = new Execute();
 
 execute.run(executionTree, {})
 .then( (result)=> {
-    console.log(result));
+    console.log(result);
 });
 
 // Console output will look something like this:
 //{"a": 1,"b": 2,"c": 3}
 ```
+
+As you see the return value of step's action will be added to final result.
+And also each action has access to return value of previous steps. 
+For example:
+
+```js
+let Execute = require("execute-js");
+
+let executionTree = [
+    {
+        title: "step 1",
+        action: (data) => {return {a: 1};}
+    },
+    {
+        title: "step 2",
+        action: (data) => {return {b: data.a + 1 };}
+    }
+];
+
+let execute = new Execute();
+
+execute.run(executionTree, {})
+.then( (result)=> {
+    console.log(result);
+});
+
+// Console output will look something like this:
+//{"a": 1,"b": 2}
+```
+
+If you want more control over the return value of actions then there is output configuration for each step:
+```js
+{
+    title: "step title",
+    action: functionToCall,
+    output: {
+        accessibleToNextSteps: boolean, // value of action be accessible to next steps (same level) 
+        addToResult: boolean, // value of action be accessible in result (and be accessible for parrent level)
+        map: {
+            source: string, // instead of adding the whole value we can point to part of the result
+            destination: string // instead of adding the return value to root we can specify different path
+        }
+    }
+}
+```
+
+Lets show each of them with an example.
 
 ## API
 TODO: Fill out API specification.
@@ -91,6 +138,7 @@ TODO: Fill out API specification.
 You can use middleware to add new feature to execute-js.
 
 ```js
+
 ```
 
 ## Maintainers
