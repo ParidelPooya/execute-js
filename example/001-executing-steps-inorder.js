@@ -23,8 +23,6 @@ let executionTree = [
     }
 ];
 
-
-
 let executionData = {
     sub_id :123
 };

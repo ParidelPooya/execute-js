@@ -54,8 +54,45 @@ npm install --save execute-js
 
 ## Usage
 
-Simplest way to
+Simplest way is to define one or more steps and use Execute-js to run it:
 ```js
+let Execute = require("execute-js");
+
+let executionTree = [
+    {
+        title: "step 1",
+        action: (data) => {return {a: 1};}
+    },
+    {
+        title: "step 2",
+        action: (data) => {return {b: 2};}
+    },
+    {
+        title: "step 3",
+        action: (data) => {return {c: 3};}
+    }
+];
+
+let executionData = {};
+
+let execute = new Execute();
+
+execute.run(executionTree, executionData)
+.then( (result)=> {
+    console.log("finished with this result:");
+    console.log(JSON.stringify(result, null, 2));
+})
+.catch( (e)=> {
+    console.log("catch", e);
+});
+
+// Console output will look something like this:
+//
+//{
+//  "a": 1,
+//  "b": 2,
+//  "c": 3
+//}
 ```
 
 ## API
