@@ -42,8 +42,9 @@ configuring the setting.
 - Ability to ignore step's error and continue the execution
 - Ability to define new actions by middleware
 - Predefined map middleware (action) to iterate arrays and repeat action for each itam.
-- The parser log the whole process and debuging and fine tuning workflow and actions are simple.
+- The parser log the whole process and debugging and fine tuning workflow and actions are simple.
 - Logger is injectable and easy to replace
+- Ability to terminate one level or entire execution by signals
 
 ## Install
 
