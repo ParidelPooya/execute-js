@@ -29,8 +29,8 @@ configuring the setting.
 - Accept a test and condition, each condition is a child workflow (another execution tree)
 - Unlimited nested level
 - Executing steps sequentially
-- Executing steps in cuncurrent mode
-- Threshold for maximum cuncurrency for each level
+- Executing steps in concurrent mode
+- Threshold for maximum concurrency for each level
 - Retry steps
 - Retry condition
 - Caching for each step
