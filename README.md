@@ -6,18 +6,44 @@
 [![Known Vulnerabilities](https://snyk.io/test/github/paridelpooya/execute-js/badge.svg)](https://snyk.io/test/github/paridelpooya/execute-js)
 [![license](https://img.shields.io/github/license/paridelpooya/execute-js.svg)](https://github.com/ParidelPooya/execute-js/blob/master/LICENSE)
 
-> Application workflow executor for JavaScrip
+Application workflow executor for JavaScrip
 
-TODO: Fill out this long description.
+Execute-js is designed to accept workflow and data and it execute and run the workflow and return the result.
+By using Execute-js you can keep your logic readable and in the same time you can use all feature of Execute-js by
+configuring the setting.
 
 ## Table of Contents
 
+- [Features] (#features)
 - [Install](#install)
 - [Usage](#usage)
 - [API](#api)
 - [Maintainers](#maintainers)
 - [Contribute](#contribute)
 - [License](#license)
+
+## Features
+
+- Accept workflow as JSON object
+- Define action for each step by a sync or async JavaScript function
+- Accept a test and condition, each condition is a child workflow (another execution tree)
+- Unlimited nested level
+- Executing steps sequentially
+- Executing steps in cuncurrent mode
+- Threshold for maximum cuncurrency for each level
+- Retry steps
+- Retry condition
+- Caching for each step
+- Simple way to use different cache library
+- Each step's result is configurable to be accessible to next steps or not
+- Each step's result is configurable to be accessible in the final resultt or not
+- Handling throw error and terminating the execution
+- Ability to map and transfer each step result
+- Ability to ignore step's error and continue the execution
+- Ability to define new actions by middleware
+- Predefined map middleware (action) to iterate arrays and repeat action for each itam.
+- The parser log the whole process and debuging and fine tuning workflow and actions are simple.
+- Logger is injectable and easy to replace
 
 ## Install
 
@@ -27,6 +53,7 @@ npm install --save execute-js
 
 ## Usage
 
+Simplest way to
 ```js
 ```
 
