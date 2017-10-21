@@ -73,26 +73,15 @@ let executionTree = [
     }
 ];
 
-let executionData = {};
-
 let execute = new Execute();
 
-execute.run(executionTree, executionData)
+execute.run(executionTree, {})
 .then( (result)=> {
-    console.log("finished with this result:");
-    console.log(JSON.stringify(result, null, 2));
-})
-.catch( (e)=> {
-    console.log("catch", e);
+    console.log(result));
 });
 
 // Console output will look something like this:
-//
-//{
-//  "a": 1,
-//  "b": 2,
-//  "c": 3
-//}
+//{"a": 1,"b": 2,"c": 3}
 ```
 
 ## API
