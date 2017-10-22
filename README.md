@@ -54,6 +54,7 @@ npm install --save execute-js
 
 ## Usage
 
+### 1.Executing multiple steps
 Simplest way is to define one or more steps and use Execute-js to run it:
 ```js
 let Execute = require("execute-js");
@@ -83,6 +84,8 @@ execute.run(executionTree, {})
 // Console output will look something like this:
 //{"a": 1,"b": 2,"c": 3}
 ```
+
+### 2.Control output of step
 
 As you see the return value of step's action will be added to final result.
 And also each action has access to return value of previous steps. 
@@ -131,7 +134,7 @@ If you want more control over the return value of actions then there is output c
 
 Lets show each of them with an example.
 
-**accessibleToNextSteps**: This example shows accessibleToNextSteps will hide the result from the the next step so the next step can't access data.a
+**2.1 accessibleToNextSteps**: This example shows accessibleToNextSteps will hide the result from the the next step so the next step can't access data.a
 ```js
 let Execute = require("execute-js");
 
@@ -161,7 +164,7 @@ execute.run(executionTree, {})
 //{"a": 1}
 ```
 
-**addToResult**: If you want to use the result of one step internally but you don't want to add it to the final result then add addToResult to that step:
+**2.2 addToResult**: If you want to use the result of one step internally but you don't want to add it to the final result then add addToResult to that step:
 ```js
 let Execute = require("execute-js");
 
@@ -190,7 +193,43 @@ execute.run(executionTree, {})
 //{"b": 2}
 ```
 
+**2.3 map**: with map you have control to copy part of step's return to specefic location in final result:
+```js
+let Execute = require("execute-js");
 
+let executionTree = [
+    {
+        title: "step 1",
+        action: (data) => 
+            {
+                return {
+                    status: 202,
+                    result: [
+                        {
+                            title:"Title 1"
+                        }
+                    ]
+                };
+            },
+        output: {
+            map: {
+                source: "result.0.title",
+                destination: "subject"
+            }
+        }
+    }
+];
+
+let execute = new Execute();
+
+execute.run(executionTree, {})
+.then( (result)=> {
+    console.log(result);
+});
+
+// Console output will look something like this:
+//{"result": "Title 1"}
+```
 
 ## API
 TODO: Fill out API specification.
