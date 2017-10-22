@@ -131,6 +131,67 @@ If you want more control over the return value of actions then there is output c
 
 Lets show each of them with an example.
 
+**accessibleToNextSteps**: This example shows accessibleToNextSteps will hide the result from the the next step so the next step can't access data.a
+```js
+let Execute = require("execute-js");
+
+let executionTree = [
+    {
+        title: "step 1",
+        action: (data) => {return {a: 1};},
+        output: {
+            accessibleToNextSteps: false
+        }
+    },
+    {
+        title: "step 2",
+        action: (data) => {return {b: data.a};}
+        // because data.a is not accessible then b will be undefined
+    }
+];
+
+let execute = new Execute();
+
+execute.run(executionTree, {})
+.then( (result)=> {
+    console.log(result);
+});
+
+// Console output will look something like this:
+//{"a": 1}
+```
+
+**addToResult**: If you want to use the result of one step internally but you don't want to add it to the final result then add addToResult to that step:
+```js
+let Execute = require("execute-js");
+
+let executionTree = [
+    {
+        title: "step 1",
+        action: (data) => {return {a: 1};},
+        output: {
+            addToResult: false
+        }
+    },
+    {
+        title: "step 2",
+        action: (data) => {return {b: 2 };}
+    }
+];
+
+let execute = new Execute();
+
+execute.run(executionTree, {})
+.then( (result)=> {
+    console.log(result);
+});
+
+// Console output will look something like this:
+//{"b": 2}
+```
+
+
+
 ## API
 TODO: Fill out API specification.
 
