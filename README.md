@@ -231,6 +231,171 @@ execute.run(executionTree, {})
 //{"result": "Title 1"}
 ```
 
+### 3. Test, condition and child steps
+So far we only execute steps without any condition. If you need to decide base on some parameters and then execute different steps then you need to add test, if and child steps:
+
+```js
+{
+    title: "step title",
+    test: testFunction,
+    if: {
+        branch1: childExecutionTree1,
+        branch2: childExecutionTree2,
+        ...,
+        branchn: childExecutionTreeN,
+        default: childExecutionTree
+    }
+}
+```
+test should point to a function that will return next branch name to execute, if none of the branches mathes the test result, then default branch will be executed.
+Let show it with simple example:
+
+```js
+let Execute = require("execute-js");
+
+let executionTree = [
+    {
+        id: "step1",
+        title:"step 1",
+        test: data => data.Code === "code1",
+        if: {
+            true:[
+                {
+                    id: "step2",
+                    title:"step 2",
+                    action: (data)=> {return {b: 2};}
+                }
+            ],
+            false:[
+                {
+                    id: "step3",
+                    title:"step 3",
+                    action: (data)=> {return {b: 3};}
+                }
+            ]
+        }
+    }
+];
+
+let executionData = {
+    Code: "code1",
+    Type: "type1"
+};
+
+let execute = new Execute();
+
+execute.run(executionTree, executionData)
+.then( (result)=> {
+    console.log(result);
+});
+
+// Console output will look something like this:
+//{"b": 2}
+```
+
+The output will be {"b": 2} because based on the test branch "true" will be executed.
+The test return value will be converted to string. So we can acheive the same result in this way:
+
+```js
+let Execute = require("execute-js");
+
+let executionTree = [
+    {
+        id: "step1",
+        title:"step 1",
+        test: data => data.Code,
+        if: {
+            code1:[
+                {
+                    id: "step2",
+                    title:"step 2",
+                    action: (data)=> {return {b: 2};}
+                }
+            ],
+            code2:[
+                {
+                    id: "step3",
+                    title:"step 3",
+                    action: (data)=> {return {b: 3};}
+                }
+            ]
+        }
+    }
+];
+
+let executionData = {
+    Code: "code1",
+    Type: "type1"
+};
+
+let execute = new Execute();
+
+execute.run(executionTree, executionData)
+.then( (result)=> {
+    console.log(result);
+});
+
+// Console output will look something like this:
+//{"b": 2}
+```
+
+Also if none of the branches match the test then default branch will be executed:
+
+```js
+let Execute = require("execute-js");
+
+let executionTree = [
+    {
+        id: "step1",
+        title:"step 1",
+        test: data => data.Code,
+        if: {
+            code1:[
+                {
+                    id: "step2",
+                    title:"step 2",
+                    action: (data)=> {return {b: 2};}
+                }
+            ],
+            code2:[
+                {
+                    id: "step3",
+                    title:"step 3",
+                    action: (data)=> {return {b: 3};}
+                }
+            ],
+            default:[
+                {
+                    id: "step3",
+                    title:"step 3",
+                    action: (data)=> {return {b: 4};}
+                }
+            ]
+        }
+    }
+];
+
+let executionData = {
+    Code: "code3",
+    Type: "type1"
+};
+
+let execute = new Execute();
+
+execute.run(executionTree, executionData)
+.then( (result)=> {
+    console.log(result);
+});
+
+// Console output will look something like this:
+//{"b": 4}
+```
+
+Each branch should point to another execution tree.
+
+###4. Terminating the execution
+
+
 ## API
 TODO: Fill out API specification.
 
