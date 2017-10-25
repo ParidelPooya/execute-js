@@ -231,7 +231,7 @@ class Execute {
                 this._options.logger.info(`Action result: ${JSON.stringify(_result)}`);
 
                 if (_output.accessibleToNextSteps) {
-                    allData = Execute.spreadify()(allData, _result);
+                    allData = Execute.spreadify(true)(allData, _result);
                 }
 
                 // if there's a test defined, then actionResult must be a promise
