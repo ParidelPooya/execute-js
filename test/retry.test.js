@@ -40,7 +40,8 @@ lab.experiment("Basic Steps Test", () => {
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.a).to.equal(1);
             lab.expect(retryCount).to.equal(9);
-        }).catch( ()=> {
+        }).catch( (e)=> {
+            console.log(e);
 
         });
     });

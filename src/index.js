@@ -159,18 +159,22 @@ class Execute {
     executeStepActionWithRetry(step, executionData) {
         let action = this._actions[step.actionType](step.action, executionData, this._options);
 
-        // TODO: Dynamic retry handleing instead of building the chain of catch
-        for (let i = 0; i < step.errorHandling.maxAttempts; i++) {
-            action = action.catch((e) => {
-                if (step.errorHandling.tryCondition(e)) {
-                    this._options.logger.info(`Step: ${step.title} try ${i + 1} failed. Retrying...`);
-                    return Promise.resolve(step.action(executionData, this._options));
-                }
+        let retryPromise = (tries)=> {
+            return Promise.resolve(action).catch( (err) => {
+                if (--tries > 0 && step.errorHandling.tryCondition(err)) {
+                    this._options.logger.warn(`Step: ${step.title} failed. Retrying.`);
 
-                return Promise.reject(e);
+                    return retryPromise(tries);
+                } else {
+                    this._options.logger.log(`Step: ${step.title} action failed.`);
+
+                    return Promise.reject(err);
+                }
             });
-        }
-        return action;
+        };
+
+        return retryPromise(step.errorHandling.maxAttempts);
+
     }
 
     executeStepActionWithCache(step, executionData) {
