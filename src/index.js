@@ -34,28 +34,35 @@ class Execute {
 
     static spreadify(deepCopy) {
         return function () {
-            // Holds the processed arguments for use by `fn`
             let spreadArgs = {};
+            let isArray = true;
+            let isEmpty = true;
 
-            // Caching length
-            let length = arguments.length;
+            for (let i = 0; i < arguments.length; i++) {
+                let currentArg = arguments[i];
 
-            let currentArg;
-
-            for (let i = 0; i < length; i++) {
-                currentArg = arguments[i];
-
-                Object.keys(currentArg).map((key) => {
-                    if (deepCopy &&
-                        typeof(spreadArgs[key]) === "object" && spreadArgs[key] !== null &&
-                        currentArg[key] !== null
-
-                    ) {
-                        spreadArgs[key] = Execute.spreadify(deepCopy)(spreadArgs[key], currentArg[key]);
+                if (Array.isArray(currentArg) && isArray ) {
+                    if (isEmpty) {
+                        spreadArgs = [...currentArg];
+                        isEmpty = false;
                     } else {
-                        spreadArgs[key] = currentArg[key];
+                        spreadArgs = spreadArgs.concat(currentArg);
                     }
-                });
+                } else {
+                    Object.keys(currentArg).map((key) => {
+                        isArray = false;
+
+                        if (deepCopy &&
+                            typeof(spreadArgs[key]) === "object" && spreadArgs[key] !== null &&
+                            currentArg[key] !== null
+                        ) {
+                            spreadArgs[key] = Execute.spreadify(deepCopy)(spreadArgs[key], currentArg[key]);
+                        } else {
+                            spreadArgs[key] = currentArg[key];
+                        }
+                    });
+                }
+
             }
             return spreadArgs;
         };
