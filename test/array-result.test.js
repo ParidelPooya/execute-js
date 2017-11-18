@@ -18,7 +18,6 @@ lab.experiment("Array Result Test", () => {
                         destination: "main"
                     }
                 }
-
             },
             {
                 title:"step 1",

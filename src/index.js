@@ -218,60 +218,69 @@ class Execute {
     processStep(step, executionData) {
 
         let _step = Execute.spreadify(true)(Execute.executionTreeDefaultSetting.steps[0], step);
-        let allData = Execute.spreadify()(executionData, {});
+        //let allData = Execute.spreadify()(executionData, {});
 
         this._options.logger.info(`Step: ${_step.title}`);
 
         return new Promise((resolve, reject) => {
 
-            this.executeStepActionAndHandleError(_step, executionData).then((result) => {
+            let _output = Execute.spreadify(true)(
+                Execute.executionTreeDefaultSetting.steps[0].output,
+                _step.output);
 
-                let _output = Execute.spreadify(true)(
-                    Execute.executionTreeDefaultSetting.steps[0].output,
-                    _step.output);
-
-                let _result = {};
-
-                if (_output.map.destination.length !== 0) {
-                    _result = Execute.addPrefixToPath(_output.map.destination, Execute.getByPath(result, _output.map.source));
-                }
-                else {
-                    _result = Execute.getByPath(result, _output.map.source);
-                }
-
-                this._options.logger.info(`Action result: ${JSON.stringify(_result)}`);
-
-                if (_output.accessibleToNextSteps) {
-                    allData = Execute.spreadify(true)(allData, _result);
-                }
-
+            if ("test" in _step) {
                 // if there's a test defined, then actionResult must be a promise
                 // so pass the promise response to goToNextStep
-                if ("test" in _step) {
-                    this.goToNextStep(_step, allData).then((childResponse) => {
-                        this._options.logger.info(`Child result: ${JSON.stringify(childResponse.result)}`);
 
-                        childResponse.result = Execute.spreadify(true)(result, childResponse.result);
+                this.goToNextStep(_step, executionData).then((childResponse) => {
+                    this._options.logger.info(`Child result: ${JSON.stringify(childResponse.result)}`);
 
-                        if (_output.map.destination.length !== 0) {
-                            childResponse.result = Execute.addPrefixToPath(_output.map.destination, Execute.getByPath(childResponse.result, _output.map.source));
-                        }
-                        else {
-                            childResponse.result = Execute.getByPath(childResponse.result, _output.map.source);
-                        }
+                    //childResponse.result = Execute.spreadify(true)(result, childResponse.result);
 
-                        this._options.logger.info(`Total result: ${JSON.stringify(childResponse.result)}`);
+                    // if (_output.map.destination.length !== 0) {
+                    //     childResponse.result = Execute.addPrefixToPath(_output.map.destination, Execute.getByPath(childResponse.result, _output.map.source));
+                    // }
+                    // else {
+                    //     childResponse.result = Execute.getByPath(childResponse.result, _output.map.source);
+                    // }
 
-                        resolve(childResponse);
-                    }).catch((e) => {
-                        reject(e);
-                    });
-                } else {
+                    childResponse.result = Execute.getByPath(childResponse.result, _output.map.source);
+
+                    this._options.logger.info(`Total result: ${JSON.stringify(childResponse.result)}`);
+
+                    resolve(childResponse);
+                }).catch((e) => {
+                    reject(e);
+                });
+            } else {
+                // Only executing action when there is no test.
+                // By this we can improve performance because we don't need to
+                // combine the result of action and test
+                this.executeStepActionAndHandleError(_step, executionData).then((result) => {
+
+                    let _result = {};
+
+                    // if (_output.map.destination.length !== 0) {
+                    //     _result = Execute.addPrefixToPath(_output.map.destination, Execute.getByPath(result, _output.map.source));
+                    // }
+                    // else {
+                    //     _result = Execute.getByPath(result, _output.map.source);
+                    // }
+                    _result = Execute.getByPath(result, _output.map.source);
+
+                    this._options.logger.info(`Action result: ${JSON.stringify(_result)}`);
+
+                    // if (_output.accessibleToNextSteps) {
+                    //     allData = Execute.spreadify(true)(allData, _result);
+                    // }
+
                     resolve({result: _result, signal: Execute.executionMode.CONTINUE});
-                }
-            }).catch((e) => {
-                reject(e);
-            });
+
+                }).catch((e) => {
+                    reject(e);
+                });
+
+            }
         });
     }
 
@@ -292,9 +301,7 @@ class Execute {
 
         let finalResult = {};
         let finalSignal = Execute.executionMode.CONTINUE;
-
-        let allData = Execute.spreadify()(executionData, {});
-
+        
         let i = 0;
         let listOfPromises = [];
 
@@ -306,7 +313,7 @@ class Execute {
                 step);
 
             ps.push(() => {
-                return this.processStep(step, allData)
+                return this.processStep(step, executionData)
                     .then(response => {
                         finalSignal = Math.max(finalSignal, response.signal);
 
@@ -315,15 +322,27 @@ class Execute {
                             _step.output);
 
                         if (_output.accessibleToNextSteps) {
-                            allData = Execute.spreadify()(allData, response.result);
+                            if (_output.map.destination.length !== 0) {
+                                executionData = Execute.spreadify()(executionData, Execute.addPrefixToPath(_output.map.destination, response.result));
+                            }
+                            else {
+                                executionData = Execute.spreadify()(executionData, response.result);
+                            }
+
                         }
 
                         let _stepResult = {};
 
                         if (_output.addToResult) {
-                            _stepResult = response.result;
+                            if (_output.map.destination.length !== 0) {
+                                _stepResult = Execute.addPrefixToPath(_output.map.destination, response.result);
+                            }
+                            else {
+                                _stepResult = response.result;
+                            }
                         }
 
+                        // TODO : this one is expensive
                         finalResult = Execute.spreadify(true)(finalResult, _stepResult);
 
                         return {result: finalResult, signal: finalSignal};
