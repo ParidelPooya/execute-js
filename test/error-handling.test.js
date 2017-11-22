@@ -1,4 +1,5 @@
 const lab = require("lab").script();
+
 exports.lab = lab;
 
 let Execute = require("../src/index");
@@ -37,8 +38,6 @@ lab.experiment("Error Handling Test", () => {
         let execute = new Execute();
         return execute.run(executionTree, executionData).then((result) => {
             lab.expect(result.c).to.equal(3);
-        }).catch(() => {
-
         });
     });
 
@@ -57,7 +56,7 @@ lab.experiment("Error Handling Test", () => {
                 },
                 errorHandling: {
                     continueOnError: true,
-                    onErrorResponse: {b:-1}
+                    onError: ()=> {return {b:-1};}
                 }
             },
             {
@@ -74,9 +73,8 @@ lab.experiment("Error Handling Test", () => {
         };
         let execute = new Execute();
         return execute.run(executionTree, executionData).then((result) => {
-            lab.expect(result.b).to.equal(-1);
-        }).catch(() => {
-
+            lab.expect(result.b).to.not.be.undefined();
+            lab.expect(result.a).to.equal(1);
         });
     });
 

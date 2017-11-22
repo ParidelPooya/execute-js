@@ -164,9 +164,10 @@ class Execute {
     }
 
     executeStepActionWithRetry(step, executionData) {
-        let action = this._actions[step.actionType](step.action, executionData, this._options);
 
         let retryPromise = (tries)=> {
+            let action = this._actions[step.actionType](step.action, executionData, this._options);
+
             return Promise.resolve(action).catch( (err) => {
                 if (--tries > 0 && step.errorHandling.tryCondition(err)) {
                     this._options.logger.warn(`Step: ${step.title} failed. Retrying.`);
@@ -209,9 +210,13 @@ class Execute {
     executeStepActionAndHandleError(step, executionData) {
         return this.executeStepActionWithCache(step, executionData)
             .catch((e) => {
-                return step.errorHandling.continueOnError ?
-                    Promise.resolve(step.errorHandling.onErrorResponse) :
-                    Promise.reject(e);
+
+                if (step.errorHandling.continueOnError) {
+                    return step.errorHandling.onError(e ,executionData, this._options);
+                } else {
+                    step.errorHandling.onError(e ,executionData, this._options);
+                    return Promise.reject(e);
+                }
             });
     }
 
@@ -386,7 +391,7 @@ Execute.executionTreeDefaultSetting = {
                 maxAttempts: 0,
                 tryCondition: () => true,
                 continueOnError: false,
-                onErrorResponse: {}
+                onError: () => {return {};}
             },
             cache: {
                 enable: false,

@@ -5,7 +5,7 @@ let Execute = require("../src/index");
 
 lab.experiment("Basic Steps Test", () => {
 
-    lab.test("returns step coverage when there is only one step", () => {
+    lab.test("returns step result when there is only one step", () => {
         let executionTree = [
             {
                 title:"step 1",
@@ -21,7 +21,7 @@ lab.experiment("Basic Steps Test", () => {
         });
     });
 
-    lab.test("returns all steps coverage when there is multiple steps", () => {
+    lab.test("returns all steps result when there is multiple steps", () => {
         let executionTree = [
             {
                 title:"step 1",
@@ -175,10 +175,30 @@ lab.experiment("Basic Steps Test", () => {
         let execute = new Execute();
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.b).to.equal(null);
-        }).catch( ()=> {
-
         });
     });
 
+    lab.test("returns steps result when there is steps without action", () => {
+        let executionTree = [
+            {
+                title:"step 1",
+            },
+            {
+                title:"step 2",
+                action: (data) => {return {a: 1};}
+            },
+            {
+                title:"step 3",
+            }
+
+        ];
+        let executionData = {
+            sub_id :123
+        };
+        let execute = new Execute();
+        return execute.run(executionTree, executionData).then( (result)=> {
+            lab.expect(result.a).to.equal(1);
+        });
+    });
 
 });
