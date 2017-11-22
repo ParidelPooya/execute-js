@@ -211,12 +211,15 @@ class Execute {
         return this.executeStepActionWithCache(step, executionData)
             .catch((e) => {
 
-                if (step.errorHandling.continueOnError) {
-                    return step.errorHandling.onError(e ,executionData, this._options);
-                } else {
-                    step.errorHandling.onError(e ,executionData, this._options);
-                    return Promise.reject(e);
-                }
+                return Promise.resolve(step.errorHandling.onError(e ,executionData, this._options))
+                    .then( (data)=> {
+                        if (step.errorHandling.continueOnError) {
+                            return data;
+                        } else {
+                            return Promise.reject(e);
+                        }
+                    });
+
             });
     }
 
