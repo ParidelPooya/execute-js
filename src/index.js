@@ -174,7 +174,7 @@ class Execute {
 
                     return retryPromise(tries);
                 } else {
-                    this._options.logger.log(`Step: ${step.title} action failed.`);
+                    this._options.logger.error(`Step: ${step.title} action failed.`);
 
                     return Promise.reject(err);
                 }
