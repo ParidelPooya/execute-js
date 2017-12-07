@@ -1,5 +1,7 @@
 let Execute = require("../src/index");
 
+let execute = new Execute();
+
 const func = (data)=> {
     return new Promise((resolve) => {
 
@@ -16,7 +18,7 @@ const cacheOptions = {
     key: (data) => data.sub_id
 };
 
-let executionTree = {
+let executionTree = Execute.prepareExecutionTree({
     concurrency: 1,
     steps :[
         {
@@ -45,7 +47,7 @@ let executionTree = {
             action: (data) => func({e: 5})
         }
     ]
-};
+});
 
 
 
@@ -53,7 +55,7 @@ let executionData = {
     sub_id :123
 };
 
-let execute = new Execute();
+
 execute.run(executionTree, executionData).then( (result)=> {
     console.log("finished with this result:");
     console.log(JSON.stringify(result, null, 2));

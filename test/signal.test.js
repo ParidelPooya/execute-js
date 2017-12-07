@@ -3,7 +3,7 @@ exports.lab = lab;
 
 let Execute = require("../src/index");
 
-lab.experiment("Signal Test", () => {
+lab.experiment("Signal - ", () => {
 
     lab.test("should ignore step 3", () => {
         let execute = new Execute();

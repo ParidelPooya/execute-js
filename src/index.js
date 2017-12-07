@@ -193,6 +193,31 @@ class Execute {
         return _step;
     }
 
+    static extractStatistics(executionTree){
+        let stat = {
+            steps:[]
+        };
+
+        executionTree.steps.forEach((step, ipos) => {
+            stat.steps.push({});
+            let statStep = stat.steps[ipos];
+
+            statStep.statistics = step.statistics;
+
+            if(typeof(step.if) !== "undefined") {
+                statStep.if = {};
+
+                Object.keys(step.if).forEach((cond) => {
+                    if (typeof(step.if[cond]) === "object") {
+                        statStep.if[cond] = Execute.extractStatistics(step.if[cond]);
+                    }
+                });
+            }
+        });
+
+        return Execute.clone(stat);
+    }
+
     use(middleware) {
         if (!middleware.type) {
             throw new Error("type is missing in middleware contract");

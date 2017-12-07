@@ -3,7 +3,7 @@ exports.lab = lab;
 
 let Execute = require("../src/index");
 
-lab.experiment("Overwriting Result Test", () => {
+lab.experiment("Overwriting Result - ", () => {
 
     lab.test("last step should overwrite the result of first step", () => {
         let execute = new Execute();

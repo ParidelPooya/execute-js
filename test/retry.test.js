@@ -3,7 +3,7 @@ exports.lab = lab;
 
 let Execute = require("../src/index");
 
-lab.experiment("Basic Steps Test", () => {
+lab.experiment("Retry -", () => {
 
     lab.test("should retry 10 times", () => {
         let execute = new Execute();

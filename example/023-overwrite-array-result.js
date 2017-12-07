@@ -1,6 +1,8 @@
 let Execute = require("../src/index");
 
-let executionTree = [
+let execute = new Execute();
+
+let executionTree = Execute.prepareExecutionTree([
     {
         title:"step 0",
         action: (data)=>{
@@ -35,13 +37,13 @@ let executionTree = [
         }
 
     }
-];
+]);
 
 let executionData = {
     Code: "code1",
     Type: "type1"
 };
-let execute = new Execute();
+
 execute.run(executionTree, executionData).then( (result)=> {
     console.log("finished with this result:");
     console.log(JSON.stringify(result, null, 2));
