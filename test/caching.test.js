@@ -6,6 +6,8 @@ let Execute = require("../src/index");
 lab.experiment("Caching Test", () => {
 
     lab.test("the result should be {a:1} because of caching", () => {
+        let execute = new Execute();
+
         const func = (data)=> {
             return new Promise((resolve) => {
 
@@ -22,7 +24,7 @@ lab.experiment("Caching Test", () => {
             key: (data) => data.sub_id
         };
 
-        let executionTree = {
+        let executionTree = Execute.prepareExecutionTree({
             concurrency: 1,
             steps :[
                 {
@@ -51,14 +53,14 @@ lab.experiment("Caching Test", () => {
                     action: (data) => func({e: 5})
                 }
             ]
-        };
+        });
 
 
 
         let executionData = {
             sub_id :123
         };
-        let execute = new Execute();
+
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.a).to.equal(1);
         });

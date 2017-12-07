@@ -6,23 +6,28 @@ let Execute = require("../src/index");
 lab.experiment("Basic Steps Test", () => {
 
     lab.test("returns step result when there is only one step", () => {
-        let executionTree = [
+        let execute = new Execute();
+
+        let executionTree = Execute.prepareExecutionTree([
             {
                 title:"step 1",
                 action: (data) => {return {a: 1};}
             }
-        ];
+        ]);
+
         let executionData = {
             sub_id :123
         };
-        let execute = new Execute();
+
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.a).to.equal(1);
         });
     });
 
     lab.test("returns all steps result when there is multiple steps", () => {
-        let executionTree = [
+        let execute = new Execute();
+
+        let executionTree = Execute.prepareExecutionTree([
             {
                 title:"step 1",
                 action: (data) => {return {a: 1};}
@@ -43,11 +48,12 @@ lab.experiment("Basic Steps Test", () => {
                 title:"step 5",
                 action: (data) => {return {e: 5};}
             }
-        ];
+        ]);
+
         let executionData = {
             sub_id :123
         };
-        let execute = new Execute();
+
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.a).to.equal(1);
             lab.expect(result.b).to.equal(2);
@@ -58,7 +64,9 @@ lab.experiment("Basic Steps Test", () => {
     });
 
     lab.test("null should be overriden by number", () => {
-        let executionTree = [
+        let execute = new Execute();
+
+        let executionTree = Execute.prepareExecutionTree([
             {
                 title:"step 1",
                 action: (data) => {return {a: null};}
@@ -67,18 +75,21 @@ lab.experiment("Basic Steps Test", () => {
                 title:"step 2",
                 action: (data) => {return {a: 2};}
             }
-        ];
+        ]);
+
         let executionData = {
             sub_id :123
         };
-        let execute = new Execute();
+
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.a).to.equal(2);
         });
     });
 
     lab.test("object should be overriden by null", () => {
-        let executionTree = [
+        let execute = new Execute();
+
+        let executionTree = Execute.prepareExecutionTree([
             {
                 title:"step 1",
                 action: (data) => {return {a: {x:1}};}
@@ -87,11 +98,12 @@ lab.experiment("Basic Steps Test", () => {
                 title:"step 2",
                 action: (data) => {return {a: null};}
             }
-        ];
+        ]);
+
         let executionData = {
             sub_id :123
         };
-        let execute = new Execute();
+
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.a).to.equal(null);
 
@@ -99,7 +111,9 @@ lab.experiment("Basic Steps Test", () => {
     });
 
     lab.test("number should be overriden by object", () => {
-        let executionTree = [
+        let execute = new Execute();
+
+        let executionTree = Execute.prepareExecutionTree([
             {
                 title:"step 1",
                 action: (data) => {return {a: 2};}
@@ -108,11 +122,12 @@ lab.experiment("Basic Steps Test", () => {
                 title:"step 2",
                 action: (data) => {return {a: {x:1}};}
             }
-        ];
+        ]);
+
         let executionData = {
             sub_id :123
         };
-        let execute = new Execute();
+
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.a.x).to.equal(1);
 
@@ -120,7 +135,9 @@ lab.experiment("Basic Steps Test", () => {
     });
 
     lab.test("2 objects should be combined", () => {
-        let executionTree = [
+        let execute = new Execute();
+
+        let executionTree = Execute.prepareExecutionTree([
             {
                 title:"step 1",
                 action: (data) => {return {a: {y:1}};}
@@ -129,11 +146,12 @@ lab.experiment("Basic Steps Test", () => {
                 title:"step 2",
                 action: (data) => {return {a: {x:1}};}
             }
-        ];
+        ]);
+
         let executionData = {
             sub_id :123
         };
-        let execute = new Execute();
+
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.a.x).to.equal(1);
             lab.expect(result.a.y).to.equal(1);
@@ -142,12 +160,14 @@ lab.experiment("Basic Steps Test", () => {
     });
 
     lab.test("null from condition should override the value of first step", () => {
+        let execute = new Execute();
+
         let executionData = {
             Code: "code1",
             Type: "type1"
         };
 
-        let executionTree = [
+        let executionTree = Execute.prepareExecutionTree([
             {
                 id: "step1",
                 title:"step 1",
@@ -170,16 +190,17 @@ lab.experiment("Basic Steps Test", () => {
                     ]
                 }
             }
-        ];
+        ]);
 
-        let execute = new Execute();
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.b).to.equal(null);
         });
     });
 
     lab.test("returns steps result when there is steps without action", () => {
-        let executionTree = [
+        let execute = new Execute();
+
+        let executionTree = Execute.prepareExecutionTree([
             {
                 title:"step 1",
             },
@@ -191,11 +212,12 @@ lab.experiment("Basic Steps Test", () => {
                 title:"step 3",
             }
 
-        ];
+        ]);
+
         let executionData = {
             sub_id :123
         };
-        let execute = new Execute();
+
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.a).to.equal(1);
         });

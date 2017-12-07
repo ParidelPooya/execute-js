@@ -6,7 +6,9 @@ let Execute = require("../src/index");
 lab.experiment("Condition Test", () => {
 
     lab.test("should execute the correct step based on condition (with function)", () => {
-        let executionTree = [
+        let execute = new Execute();
+
+        let executionTree = Execute.prepareExecutionTree([
             {
                 id: "step1",
                 title:"step 1",
@@ -28,20 +30,22 @@ lab.experiment("Condition Test", () => {
                     ]
                 }
             }
-        ];
+        ]);
 
         let executionData = {
             Code: "code1",
             Type: "type1"
         };
-        let execute = new Execute();
+
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.b).to.equal(2);
         });
     });
 
     lab.test("should execute the default step none of the condition matched", () => {
-        let executionTree = [
+        let execute = new Execute();
+
+        let executionTree = Execute.prepareExecutionTree([
             {
                 id: "step1",
                 title:"step 1",
@@ -56,20 +60,22 @@ lab.experiment("Condition Test", () => {
                     ]
                 }
             }
-        ];
+        ]);
 
         let executionData = {
             Code: "code1",
             Type: "type1"
         };
-        let execute = new Execute();
+
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.b).to.equal(2);
         });
     });
 
     lab.test("should throw error when the next step is missing", () => {
-        let executionTree = [
+        let execute = new Execute();
+
+        let executionTree = Execute.prepareExecutionTree([
             {
                 id: "step1",
                 title:"step 1",
@@ -78,13 +84,13 @@ lab.experiment("Condition Test", () => {
 
                 }
             }
-        ];
+        ]);
 
         let executionData = {
             Code: "code1",
             Type: "type1"
         };
-        let execute = new Execute();
+
         return execute.run(executionTree, executionData).then( ()=> {
         }).catch( (e)=> {
             lab.expect(e).to.equal("Unhandled scenario");
@@ -93,12 +99,14 @@ lab.experiment("Condition Test", () => {
 
 
     lab.test("should execute the correct step based on condition (without function)", () => {
+        let execute = new Execute();
+
         let executionData = {
             Code: "code1",
             Type: "type1"
         };
 
-        let executionTree = [
+        let executionTree = Execute.prepareExecutionTree([
             {
                 id: "step1",
                 title:"step 1",
@@ -120,9 +128,8 @@ lab.experiment("Condition Test", () => {
                     ]
                 }
             }
-        ];
+        ]);
 
-        let execute = new Execute();
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.b).to.equal(2);
         });
