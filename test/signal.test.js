@@ -32,8 +32,6 @@ lab.experiment("Signal Test", () => {
         let execute = new Execute();
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.c).to.be.undefined();
-        }).catch( ()=> {
-
         });
     });
 
@@ -45,7 +43,6 @@ lab.experiment("Signal Test", () => {
             },
             {
                 title: "step 2",
-                action: (data) => {return {b: 2};},
                 test: (data) => data.type === 2,
                 if: {
                     true: [
@@ -89,13 +86,10 @@ lab.experiment("Signal Test", () => {
         let execute = new Execute();
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.a).to.equal(1);
-            lab.expect(result.b).to.equal(2);
             lab.expect(result.c).to.equal(3);
             lab.expect(result.d).to.equal(4);
             lab.expect(result.e).to.be.undefined();
             lab.expect(result.f).to.equal(6);
-        }).catch( ()=> {
-
         });
     });
 
@@ -107,7 +101,6 @@ lab.experiment("Signal Test", () => {
             },
             {
                 title: "step 2",
-                action: (data) => {return {b: 2};},
                 test: (data) => data.type === 2,
                 if: {
                     true: [
@@ -149,13 +142,10 @@ lab.experiment("Signal Test", () => {
         let execute = new Execute();
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.a).to.equal(1);
-            lab.expect(result.b).to.equal(2);
             lab.expect(result.c).to.equal(3);
             lab.expect(result.d).to.equal(4);
             lab.expect(result.e).to.be.undefined();
             lab.expect(result.f).to.be.undefined();
-        }).catch( ()=> {
-
         });
     });
 

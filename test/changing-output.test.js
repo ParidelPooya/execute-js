@@ -5,7 +5,7 @@ let Execute = require("../src/index");
 
 lab.experiment("Changing Output Tests", () => {
 
-    lab.test("result of steps should not overwrite eachother", () => {
+    lab.test("result of steps should overwrite eachother", () => {
         let executionTree = {
             concurrency: 1,
             steps :[
@@ -49,11 +49,9 @@ lab.experiment("Changing Output Tests", () => {
         };
         let execute = new Execute();
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.differentNode.subnode.a).to.equal(1);
-            lab.expect(result.differentNode.subnode.a).to.equal(2);
+            lab.expect(result.differentNode.subnode.b).to.equal(2);
+            lab.expect(result.a).to.be.undefined();
             lab.expect(result.c).to.be.undefined();
-        }).catch( ()=> {
-
         });
     });
 
@@ -63,7 +61,6 @@ lab.experiment("Changing Output Tests", () => {
             steps :[
                 {
                     title:"step 1",
-                    action: (data) => {return {from: {a: 1}} ;},
                     test: data => data.sub_id === 123,
                     if: {
                         true:[
@@ -116,11 +113,9 @@ lab.experiment("Changing Output Tests", () => {
         };
         let execute = new Execute();
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.differentNode.subnode.a).to.equal(1);
-            lab.expect(result.differentNode.subnode.a).to.equal(2);
+            lab.expect(result.differentNode.subnode.b).to.equal(2);
+            lab.expect(result.differentNode.subnode.x).to.equal(2);
             lab.expect(result.c).to.be.undefined();
-        }).catch( ()=> {
-
         });
     });
 });

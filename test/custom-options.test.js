@@ -18,8 +18,6 @@ lab.experiment("Custom Options Test", () => {
         let execute = new Execute({});
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.a).to.equal(1);
-        }).catch( ()=> {
-
         });
     });
 

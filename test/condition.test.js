@@ -37,8 +37,6 @@ lab.experiment("Condition Test", () => {
         let execute = new Execute();
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.b).to.equal(2);
-        }).catch( ()=> {
-
         });
     });
 
@@ -67,8 +65,6 @@ lab.experiment("Condition Test", () => {
         let execute = new Execute();
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.b).to.equal(2);
-        }).catch( ()=> {
-
         });
     });
 
@@ -129,8 +125,6 @@ lab.experiment("Condition Test", () => {
         let execute = new Execute();
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.b).to.equal(2);
-        }).catch( ()=> {
-
         });
     });
 });
