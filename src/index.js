@@ -105,6 +105,15 @@ class Execute {
         //     return copy;
         // }
 
+        // Handle Array
+        if (obj instanceof Array) {
+            copy = [];
+            for (let i = 0, len = obj.length; i < len; i++) {
+                copy[i] = Execute.clone(obj[i]);
+            }
+            return copy;
+        }
+
         copy = {};
         for (let attr in obj) {
             copy[attr] = Execute.clone(obj[attr]);
@@ -200,8 +209,10 @@ class Execute {
 
         executionTree.steps.forEach((step, ipos) => {
             stat.steps.push({});
+
             let statStep = stat.steps[ipos];
 
+            statStep.title = step.title;
             statStep.statistics = step.statistics;
 
             if(typeof(step.if) !== "undefined") {
@@ -462,6 +473,7 @@ Execute.executionTreeDefaultSetting = {
     concurrency: 1
 };
 Execute.stepDefaultSetting = {
+    title: "No name step",
     errorHandling: {
         maxAttempts: 0,
         tryCondition: () => true,
