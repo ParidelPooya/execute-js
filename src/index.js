@@ -286,6 +286,9 @@ class Execute {
             let action = this._actions[step.actionType](step.action, executionData, this._options);
 
             return Promise.resolve(action).catch( (err) => {
+                // update statistics
+                step.statistics.errors++;
+
                 if (--tries > 0 && step.errorHandling.tryCondition(err)) {
                     this._options.logger.warn(`Step: ${step.title} failed. Retrying.`);
 
@@ -309,8 +312,14 @@ class Execute {
                 .then((hasData) => {
                     console.log("Has Data:", hasData);
                     if (hasData) {
+                        // update statistics
+                        step.statistics.cache.hits++;
+
                         return Promise.resolve(this._options.cache.get(cacheKey));
                     } else {
+                        // update statistics
+                        step.statistics.cache.misses++;
+
                         return this.executeStepActionWithRetry(step, executionData).then((data) => {
                             return Promise.resolve(this._options.cache.set(cacheKey, data, step.cache.ttl)).then((set_result) => {
                                 console.log("Set Data in Cache result:", set_result);
@@ -499,7 +508,13 @@ Execute.stepDefaultSetting = {
         total:0,
         min: Number.MAX_VALUE,
         max:0,
-        avg:null
+        avg:null,
+        errors:0,
+        cache: {
+            misses: 0,
+            hits:0
+
+        }
     }
 };
 
