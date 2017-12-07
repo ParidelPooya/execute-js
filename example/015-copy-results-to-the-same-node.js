@@ -1,6 +1,8 @@
 let Execute = require("../src/index");
 
-let executionTree = {
+let execute = new Execute();
+
+let executionTree = Execute.prepareExecutionTree({
     concurrency: 1,
     steps :[
         {
@@ -28,7 +30,7 @@ let executionTree = {
             }
         }
     ]
-};
+});
 
 
 
@@ -36,7 +38,7 @@ let executionData = {
     sub_id :123
 };
 
-let execute = new Execute();
+
 execute.run(executionTree, executionData).then( (result)=> {
     console.log("finished with this result:");
     console.log(JSON.stringify(result, null, 2));

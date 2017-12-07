@@ -68,6 +68,51 @@ class Execute {
         };
     }
 
+    static clone(obj) {
+        let copy;
+
+        // Handle the 3 simple types, and null or undefined
+        if (typeof(obj) !== "object" || obj === null) {
+            return obj;
+        }
+
+        // I am only using this clone to clone step default settings
+        // So there is no need to handle Date ot Array for now
+        // // Handle Date
+        // if (obj instanceof Date) {
+        //     copy = new Date();
+        //     copy.setTime(obj.getTime());
+        //     return copy;
+        // }
+        //
+        // // Handle Array
+        // if (obj instanceof Array) {
+        //     copy = [];
+        //     for (let i = 0, len = obj.length; i < len; i++) {
+        //         copy[i] = Execute.clone(obj[i]);
+        //     }
+        //     return copy;
+        // }
+        //
+        // // Handle Object
+        // if (obj instanceof Object) {
+        //     copy = {};
+        //     for (let attr in obj) {
+        //         if (obj.hasOwnProperty(attr)) {
+        //             copy[attr] = Execute.clone(obj[attr]);
+        //         }
+        //     }
+        //     return copy;
+        // }
+
+        copy = {};
+        for (let attr in obj) {
+            copy[attr] = Execute.clone(obj[attr]);
+        }
+        return copy;
+
+    }
+
     constructor(options) {
         let defaultOption = {
             logger: console,
@@ -110,6 +155,67 @@ class Execute {
                 .catch(console.error);
 
         }, Promise.resolve());
+    }
+
+    static prepareExecutionTree(executionTree) {
+
+        let _executionTree;
+
+        if (Object.prototype.toString.call(executionTree) === "[object Array]") {
+            // if executionTree is array then we need to convert it to proper object with all missing properties.
+            _executionTree = {
+                steps: executionTree
+            };
+        } else {
+            _executionTree = executionTree;
+        }
+
+        _executionTree = Execute.spreadify(true)(Execute.executionTreeDefaultSetting, _executionTree);
+
+        _executionTree.steps.forEach((step, ipos) => {
+            _executionTree.steps[ipos] = Execute.prepareExecutionTreeStep(step);
+        });
+
+        return _executionTree;
+    }
+
+    static prepareExecutionTreeStep(step) {
+        let _step = Execute.spreadify(true)(Execute.clone(Execute.stepDefaultSetting), step);
+
+        if(typeof(_step.if) !== "undefined") {
+            Object.keys(_step.if).forEach((cond) => {
+                if (typeof(_step.if[cond]) === "object") {
+                    _step.if[cond] = this.prepareExecutionTree(_step.if[cond]);
+                }
+            });
+        }
+
+        return _step;
+    }
+
+    static extractStatistics(executionTree){
+        let stat = {
+            steps:[]
+        };
+
+        executionTree.steps.forEach((step, ipos) => {
+            stat.steps.push({});
+            let statStep = stat.steps[ipos];
+
+            statStep.statistics = step.statistics;
+
+            if(typeof(step.if) !== "undefined") {
+                statStep.if = {};
+
+                Object.keys(step.if).forEach((cond) => {
+                    if (typeof(step.if[cond]) === "object") {
+                        statStep.if[cond] = Execute.extractStatistics(step.if[cond]);
+                    }
+                });
+            }
+        });
+
+        return Execute.clone(stat);
     }
 
     use(middleware) {
@@ -225,34 +331,18 @@ class Execute {
 
     processStep(step, executionData) {
 
-        let _step = Execute.spreadify(true)(Execute.executionTreeDefaultSetting.steps[0], step);
-        //let allData = Execute.spreadify()(executionData, {});
-
-        this._options.logger.info(`Step: ${_step.title}`);
+        this._options.logger.info(`Step: ${step.title}`);
 
         return new Promise((resolve, reject) => {
 
-            let _output = Execute.spreadify(true)(
-                Execute.executionTreeDefaultSetting.steps[0].output,
-                _step.output);
-
-            if ("test" in _step) {
+            if ("test" in step) {
                 // if there's a test defined, then actionResult must be a promise
                 // so pass the promise response to goToNextStep
 
-                this.goToNextStep(_step, executionData).then((childResponse) => {
+                this.goToNextStep(step, executionData).then((childResponse) => {
                     this._options.logger.info(`Child result: ${JSON.stringify(childResponse.result)}`);
 
-                    //childResponse.result = Execute.spreadify(true)(result, childResponse.result);
-
-                    // if (_output.map.destination.length !== 0) {
-                    //     childResponse.result = Execute.addPrefixToPath(_output.map.destination, Execute.getByPath(childResponse.result, _output.map.source));
-                    // }
-                    // else {
-                    //     childResponse.result = Execute.getByPath(childResponse.result, _output.map.source);
-                    // }
-
-                    childResponse.result = Execute.getByPath(childResponse.result, _output.map.source);
+                    childResponse.result = Execute.getByPath(childResponse.result, step.output.map.source);
 
                     this._options.logger.info(`Total result: ${JSON.stringify(childResponse.result)}`);
 
@@ -264,23 +354,11 @@ class Execute {
                 // Only executing action when there is no test.
                 // By this we can improve performance because we don't need to
                 // combine the result of action and test
-                this.executeStepActionAndHandleError(_step, executionData).then((result) => {
+                this.executeStepActionAndHandleError(step, executionData).then((result) => {
 
-                    let _result = {};
-
-                    // if (_output.map.destination.length !== 0) {
-                    //     _result = Execute.addPrefixToPath(_output.map.destination, Execute.getByPath(result, _output.map.source));
-                    // }
-                    // else {
-                    //     _result = Execute.getByPath(result, _output.map.source);
-                    // }
-                    _result = Execute.getByPath(result, _output.map.source);
+                    let _result = Execute.getByPath(result, step.output.map.source);
 
                     this._options.logger.info(`Action result: ${JSON.stringify(_result)}`);
-
-                    // if (_output.accessibleToNextSteps) {
-                    //     allData = Execute.spreadify(true)(allData, _result);
-                    // }
 
                     resolve({result: _result, signal: Execute.executionMode.CONTINUE});
 
@@ -292,20 +370,18 @@ class Execute {
         });
     }
 
+    recordStatistics(step, processTime) {
+        step.statistics.count++;
+
+        step.statistics.min = Math.min(processTime,step.statistics.min) ;
+        step.statistics.max = Math.max(processTime,step.statistics.max) ;
+
+        step.statistics.total += processTime;
+
+        step.statistics.avg = step.statistics.total / step.statistics.count;
+    }
+
     processSteps(executionTree, executionData) {
-
-        let _executionTree;
-
-        if (Object.prototype.toString.call(executionTree) === "[object Array]") {
-            // if executionTree is array then we need to convert it to proper object with all missing properties.
-            _executionTree = {
-                steps: executionTree
-            };
-        } else {
-            _executionTree = executionTree;
-        }
-
-        _executionTree = Execute.spreadify()(Execute.executionTreeDefaultSetting, _executionTree);
 
         let finalResult = {};
         let finalSignal = Execute.executionMode.CONTINUE;
@@ -314,36 +390,32 @@ class Execute {
         let listOfPromises = [];
 
         let ps = [];
-        _executionTree.steps.map((step) => {
-
-            let _step = Execute.spreadify()(
-                Execute.executionTreeDefaultSetting.steps[0],
-                step);
+        executionTree.steps.map((step) => {
 
             ps.push(() => {
+                let startTime = new Date();
+
                 return this.processStep(step, executionData)
                     .then(response => {
+                        let processTime = (new Date() - startTime);
+                        this.recordStatistics(step, processTime);
+
                         finalSignal = Math.max(finalSignal, response.signal);
 
-                        let _output = Execute.spreadify()(
-                            Execute.executionTreeDefaultSetting.steps[0].output,
-                            _step.output);
-
-                        if (_output.accessibleToNextSteps) {
-                            if (_output.map.destination.length !== 0) {
-                                executionData = Execute.spreadify()(executionData, Execute.addPrefixToPath(_output.map.destination, response.result));
+                        if (step.output.accessibleToNextSteps) {
+                            if (step.output.map.destination.length !== 0) {
+                                executionData = Execute.spreadify()(executionData, Execute.addPrefixToPath(step.output.map.destination, response.result));
                             }
                             else {
                                 executionData = Execute.spreadify()(executionData, response.result);
                             }
-
                         }
 
                         let _stepResult = {};
 
-                        if (_output.addToResult) {
-                            if (_output.map.destination.length !== 0) {
-                                _stepResult = Execute.addPrefixToPath(_output.map.destination, response.result);
+                        if (step.output.addToResult) {
+                            if (step.output.map.destination.length !== 0) {
+                                _stepResult = Execute.addPrefixToPath(step.output.map.destination, response.result);
                             }
                             else {
                                 _stepResult = response.result;
@@ -364,7 +436,7 @@ class Execute {
             }
         }
 
-        while (i < _executionTree.concurrency && i < ps.length) {
+        while (i < executionTree.concurrency && i < ps.length) {
             listOfPromises.push(doNextAction());
         }
         return Promise.all(listOfPromises).then(() => {
@@ -387,33 +459,36 @@ Execute.executionMode = {
 };
 
 Execute.executionTreeDefaultSetting = {
-    concurrency: 1,
-    steps: [
-        {
-            errorHandling: {
-                maxAttempts: 0,
-                tryCondition: () => true,
-                continueOnError: false,
-                onError: () => {return {};}
-            },
-            cache: {
-                enable: false,
-                ttl: 60
-            },
-            output: {
-                accessibleToNextSteps: true,
-                addToResult: true,
-                map: {
-                    source: "",
-                    destination: ""
-                }
-            },
-            actionType: "default",
-            action: () => {
-                return {};
-            }
+    concurrency: 1
+};
+Execute.stepDefaultSetting = {
+    errorHandling: {
+        maxAttempts: 0,
+        tryCondition: () => true,
+        continueOnError: false,
+        onError: () => ({})
+    },
+    cache: {
+        enable: false,
+        ttl: 60
+    },
+    output: {
+        accessibleToNextSteps: true,
+        addToResult: true,
+        map: {
+            source: "",
+            destination: ""
         }
-    ]
+    },
+    actionType: "default",
+    action: () => ({}),
+    statistics:{
+        count:0,
+        total:0,
+        min: Number.MAX_VALUE,
+        max:0,
+        avg:null
+    }
 };
 
 module.exports = Execute;

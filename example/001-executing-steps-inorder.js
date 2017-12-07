@@ -1,6 +1,8 @@
 let Execute = require("../src/index");
 
-let executionTree = [
+let execute = new Execute();
+
+let executionTree = Execute.prepareExecutionTree([
     {
         title: "step 1",
         action: (data) => {return {a: 1};}
@@ -21,13 +23,11 @@ let executionTree = [
         title: "step 5",
         action: (data) => {return {e: 5};}
     }
-];
+]);
 
 let executionData = {
     sub_id :123
 };
-
-let execute = new Execute();
 
 execute.run(executionTree, executionData).then( (result)=> {
     console.log("finished with this result:");

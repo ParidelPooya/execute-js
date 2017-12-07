@@ -3,10 +3,12 @@ exports.lab = lab;
 
 let Execute = require("../src/index");
 
-lab.experiment("Overwriting Result Test", () => {
+lab.experiment("Overwriting Result - ", () => {
 
     lab.test("last step should overwrite the result of first step", () => {
-        let executionTree = [
+        let execute = new Execute();
+
+        let executionTree = Execute.prepareExecutionTree([
             {
                 title:"step 0",
                 action: (data)=>{
@@ -48,13 +50,13 @@ lab.experiment("Overwriting Result Test", () => {
                 }
 
             }
-        ];
+        ]);
 
         let executionData = {
             Code: "code1",
             Type: "type1"
         };
-        let execute = new Execute();
+
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.main.a).to.equal(0);
             lab.expect(result.main.b).to.equal(0);

@@ -1,15 +1,11 @@
 let Execute = require("../src/index");
 
-let executionData = {
-    Code: "code1",
-    Type: "type1"
-};
 let execute = new Execute();
 
 let executionTree = Execute.prepareExecutionTree([
     {
         title:"step 1",
-        test: executionData.Code === "code1",
+        test: data => data.Code === "code1",
         if: {
             true:[
                 {
@@ -27,8 +23,14 @@ let executionTree = Execute.prepareExecutionTree([
     }
 ]);
 
+let executionData = {
+    Code: "code1",
+    Type: "type1"
+};
 
-execute.run(executionTree, executionData).then( (result)=> {
-    console.log("finished with this result:");
-    console.log(JSON.stringify(result, null, 2));
+execute.run(executionTree, executionData).then( ()=> {
+    console.log("Statistics:");
+    console.log(JSON.stringify(Execute.extractStatistics(executionTree),null, 4));
+}).catch( ()=> {
+    console.log("catch");
 });

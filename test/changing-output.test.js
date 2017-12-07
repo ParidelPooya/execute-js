@@ -6,7 +6,9 @@ let Execute = require("../src/index");
 lab.experiment("Changing Output Tests", () => {
 
     lab.test("result of steps should overwrite eachother", () => {
-        let executionTree = {
+        let execute = new Execute();
+
+        let executionTree = Execute.prepareExecutionTree({
             concurrency: 1,
             steps :[
                 {
@@ -42,12 +44,12 @@ lab.experiment("Changing Output Tests", () => {
                     }
                 }
             ]
-        };
+        });
 
         let executionData = {
             sub_id :123
         };
-        let execute = new Execute();
+
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.differentNode.subnode.b).to.equal(2);
             lab.expect(result.a).to.be.undefined();
@@ -56,7 +58,9 @@ lab.experiment("Changing Output Tests", () => {
     });
 
     lab.test("nested step with mapper should works", () => {
-        let executionTree = {
+        let execute = new Execute();
+
+        let executionTree = Execute.prepareExecutionTree({
             concurrency: 1,
             steps :[
                 {
@@ -106,12 +110,12 @@ lab.experiment("Changing Output Tests", () => {
                     }
                 }
             ]
-        };
+        });
 
         let executionData = {
             sub_id :123
         };
-        let execute = new Execute();
+
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.differentNode.subnode.b).to.equal(2);
             lab.expect(result.differentNode.subnode.x).to.equal(2);

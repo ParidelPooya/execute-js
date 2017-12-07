@@ -1,6 +1,8 @@
 let Execute = require("../src/index");
 
-let executionTree = [
+let execute = new Execute();
+
+let executionTree = Execute.prepareExecutionTree([
     {
         title: "step 1",
         actionType: "map",
@@ -16,13 +18,11 @@ let executionTree = [
             }
         }
     }
-];
+]);
 
 let executionData = {
     array :[1,2,3]
 };
-
-let execute = new Execute();
 
 execute.run(executionTree, executionData).then( (result)=> {
     console.log("finished with this result:");
