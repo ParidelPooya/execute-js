@@ -214,6 +214,19 @@ class Execute {
 
             statStep.title = step.title;
             statStep.statistics = step.statistics;
+            if (statStep.statistics.count !== 0) {
+                statStep.statistics.avg = statStep.statistics.total / statStep.statistics.count;
+            }
+
+            if (statStep.statistics.cache.missesNo !== 0) {
+                statStep.statistics.cache.missesAvg =
+                    statStep.statistics.cache.missesTotal / statStep.statistics.cache.missesNo;
+            }
+
+            if (statStep.statistics.cache.hitsNo !== 0) {
+                statStep.statistics.cache.hitsAvg =
+                    statStep.statistics.cache.hitsTotal / statStep.statistics.cache.hitsNo;
+            }
 
             if(typeof(step.if) !== "undefined") {
                 statStep.if = {};
@@ -311,19 +324,27 @@ class Execute {
             return Promise.resolve(this._options.cache.has(cacheKey))
                 .then((hasData) => {
                     console.log("Has Data:", hasData);
+
+                    let startTime = new Date();
+
                     if (hasData) {
                         // update statistics
-                        step.statistics.cache.hits++;
+                        step.statistics.cache.hitsNo++;
 
-                        return Promise.resolve(this._options.cache.get(cacheKey));
+                        return Promise.resolve(this._options.cache.get(cacheKey))
+                            .then((data) => {
+                                step.statistics.cache.hitsTotal += (new Date() - startTime);
+                                return data;
+                            });
                     } else {
                         // update statistics
-                        step.statistics.cache.misses++;
+                        step.statistics.cache.missesNo++;
 
                         return this.executeStepActionWithRetry(step, executionData).then((data) => {
                             return Promise.resolve(this._options.cache.set(cacheKey, data, step.cache.ttl)).then((set_result) => {
                                 console.log("Set Data in Cache result:", set_result);
-                                return Promise.resolve(data);
+                                step.statistics.cache.missesTotal += (new Date() - startTime);
+                                return data;
                             });
                         });
                     }
@@ -397,8 +418,6 @@ class Execute {
         step.statistics.max = Math.max(processTime,step.statistics.max) ;
 
         step.statistics.total += processTime;
-
-        step.statistics.avg = step.statistics.total / step.statistics.count;
     }
 
     processSteps(executionTree, executionData) {
@@ -508,12 +527,13 @@ Execute.stepDefaultSetting = {
         total:0,
         min: Number.MAX_VALUE,
         max:0,
-        avg:null,
         errors:0,
         cache: {
-            misses: 0,
-            hits:0
+            missesNo: 0,
+            missesTotal: 0,
 
+            hitsNo:0,
+            hitsTotal: 0
         }
     }
 };
