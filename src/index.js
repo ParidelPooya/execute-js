@@ -269,7 +269,8 @@ class Execute {
     }
 
     run(executionTree, executionData) {
-        return this.processSteps(executionTree, executionData).then((response) => response.result);
+        return this.executeExecutionTreeSteps(executionTree, executionData)
+            .then((response) => response.result);
     }
 
     goToNextStep(step, executionData) {
@@ -288,7 +289,7 @@ class Execute {
         else {
             // TODO: better handeling if the next step is missing.
             return nextStep ?
-                this.processSteps(nextStep, executionData) :
+                this.executeExecutionTreeSteps(nextStep, executionData) :
                 Promise.reject("Unhandled scenario");
         }
     }
@@ -320,32 +321,33 @@ class Execute {
 
     executeStepActionWithCache(step, executionData) {
         if (step.cache.enable) {
+
             let cacheKey = step.cache.key(executionData);
-            return Promise.resolve(this._options.cache.has(cacheKey))
-                .then((hasData) => {
-                    console.log("Has Data:", hasData);
+            let startTime = new Date();
 
-                    let startTime = new Date();
-
-                    if (hasData) {
+            return this._options.cache.get(cacheKey)
+                .then((data) => {
+                    if (data !== undefined) {
                         // update statistics
+                        console.log("Data exist in cache");
                         step.statistics.cache.hitsNo++;
 
-                        return Promise.resolve(this._options.cache.get(cacheKey))
-                            .then((data) => {
-                                step.statistics.cache.hitsTotal += (new Date() - startTime);
-                                return data;
-                            });
+                        step.statistics.cache.hitsTotal += (new Date() - startTime);
+                        return data;
                     } else {
+                        console.log("Data is not exist in cache");
+
                         // update statistics
                         step.statistics.cache.missesNo++;
+                        startTime = new Date();
 
                         return this.executeStepActionWithRetry(step, executionData).then((data) => {
-                            return Promise.resolve(this._options.cache.set(cacheKey, data, step.cache.ttl)).then((set_result) => {
-                                console.log("Set Data in Cache result:", set_result);
-                                step.statistics.cache.missesTotal += (new Date() - startTime);
-                                return data;
-                            });
+                            return this._options.cache.set(cacheKey, data, step.cache.ttl)
+                                .then((set_result) => {
+                                    console.log("Set Data in Cache result:", set_result);
+                                    step.statistics.cache.missesTotal += (new Date() - startTime);
+                                    return data;
+                                });
                         });
                     }
                 });
@@ -411,11 +413,10 @@ class Execute {
         step.statistics.total += processTime;
     }
 
-    processSteps(executionTree, executionData) {
-
+    executeExecutionTreeSteps(executionTree, executionData) {
         let finalResult = {};
         let finalSignal = Execute.executionMode.CONTINUE;
-        
+
         let i = 0;
         let listOfPromises = [];
 
@@ -476,7 +477,80 @@ class Execute {
                     finalSignal : Execute.executionMode.CONTINUE
             };
         });
+    }
 
+    executeExecutionTreeWithRetry(executionTree, executionData) {
+        let retryPromise = (tries)=> {
+
+            return this.executeExecutionTreeSteps(executionTree, executionData)
+                .catch( (err) => {
+                    // update statistics
+                    executionTree.statistics.errors++;
+
+                    if (--tries > 0 && executionTree.errorHandling.tryCondition(err)) {
+                        this._options.logger.warn(`Execution Tree: ${executionTree.title} failed. Retrying.`);
+
+                        return retryPromise(tries);
+                    } else {
+                        this._options.logger.error(`Execution Tree: ${executionTree.title} failed.`);
+
+                        return Promise.reject(err);
+                    }
+                });
+        };
+        return retryPromise(executionTree.errorHandling.maxAttempts);
+    }
+
+    executeExecutionTreeWithCache(executionTree, executionData) {
+        if (executionTree.cache.enable) {
+
+            let cacheKey = executionTree.cache.key(executionData);
+            let startTime = new Date();
+
+            return this._options.cache.get(cacheKey)
+                .then((data) => {
+                    if (data !== undefined) {
+                        console.log("Data exist in cache");
+
+                        // update statistics
+                        executionTree.statistics.cache.hitsNo++;
+                        executionTree.statistics.cache.hitsTotal += (new Date() - startTime);
+
+                        return data;
+                    } else {
+                        console.log("Data is not exist in cache");
+
+                        // update statistics
+                        executionTree.statistics.cache.missesNo++;
+                        startTime = new Date();
+
+                        return this.executeExecutionTreeWithRetry(executionTree, executionData).then((data) => {
+                            return this._options.cache.set(cacheKey, data, executionTree.cache.ttl)
+                                .then((set_result) => {
+                                    console.log("Set Data in Cache result:", set_result);
+                                    executionTree.statistics.cache.missesTotal += (new Date() - startTime);
+                                    return data;
+                                });
+                        });
+                    }
+                });
+        } else {
+            return this.executeExecutionTreeWithRetry(executionTree, executionData);
+        }
+    }
+
+    executeExecutionTree(executionTree, executionData) {
+        return this.executeExecutionTreeWithCache(executionTree, executionData)
+            .catch((e) => {
+                return executionTree.errorHandling.onError(e ,executionData, this._options)
+                    .then( (data)=> {
+                        if (executionTree.errorHandling.continueOnError) {
+                            return data;
+                        } else {
+                            return Promise.reject(e);
+                        }
+                    });
+            });
     }
 
 }
@@ -501,7 +575,20 @@ Execute.executionTreeDefaultSetting = {
         continueOnError: false,
         onError: () => ({})
     },
+    statistics:{
+        count:0,
+        total:0,
+        min: Number.MAX_VALUE,
+        max:0,
+        errors:0,
+        cache: {
+            missesNo: 0,
+            missesTotal: 0,
 
+            hitsNo:0,
+            hitsTotal: 0
+        }
+    }
 };
 
 
