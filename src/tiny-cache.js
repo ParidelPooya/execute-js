@@ -20,14 +20,15 @@ if (!hasData) {
 // ------------------------
 let singleton = {
     get: function (key) {
-        return global[DATA_KEY][key];
-    },
-    has: function (key) {
-        return global[DATA_KEY][key] ? true : false;
+        return new Promise((resolve)=> {
+            resolve(global[DATA_KEY][key]);
+        });
     },
     set: function (key, value) {
-        global[DATA_KEY][key] = value;
-        return true;
+        return new Promise((resolve)=> {
+            global[DATA_KEY][key] = value;
+            resolve(true);
+        });
     }
 };
 

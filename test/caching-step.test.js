@@ -3,7 +3,7 @@ exports.lab = lab;
 
 let Execute = require("../src/index");
 
-lab.experiment("Caching Test", () => {
+lab.experiment("Caching Step Test", () => {
 
     lab.test("the result should be {a:1} because of caching", () => {
         let execute = new Execute();
@@ -21,7 +21,7 @@ lab.experiment("Caching Test", () => {
         const cacheOptions = {
             enable: true,
             ttl: 60,
-            key: (data) => data.sub_id
+            key: (data) => "step-cache-key-" + data.sub_id
         };
 
         let executionTree = Execute.prepareExecutionTree({

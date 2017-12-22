@@ -3,7 +3,7 @@ exports.lab = lab;
 
 let Execute = require("../src/index");
 
-lab.experiment("Retry -", () => {
+lab.experiment("Retry Execution Tree -", () => {
 
     lab.test("should retry 10 times", () => {
         let execute = new Execute();
@@ -24,12 +24,12 @@ lab.experiment("Retry -", () => {
 
         let executionTree = Execute.prepareExecutionTree({
             concurrency: 1,
+            errorHandling: {
+                maxAttempts: 10
+            },
             steps :[
                 {
                     title:"step 1",
-                    errorHandling: {
-                        maxAttempts: 10
-                    },
                     action: (data) => func({a: 1})
                 }
             ]
@@ -63,13 +63,13 @@ lab.experiment("Retry -", () => {
 
         let executionTree = Execute.prepareExecutionTree({
             concurrency: 1,
+            errorHandling: {
+                maxAttempts: 10,
+                tryCondition: (e) => e.errorCode === 2 ? true : false
+            },
             steps :[
                 {
                     title:"step 1",
-                    errorHandling: {
-                        maxAttempts: 10,
-                        tryCondition: (e) => e.errorCode === 2 ? true : false
-                    },
                     action: (data) => func({a: 1})
                 }
             ]
