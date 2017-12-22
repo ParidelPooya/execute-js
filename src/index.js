@@ -131,7 +131,8 @@ class Execute {
         // Add all action handlers
         this._actions = {
             "default": Execute.defaultAction.bind(this),
-            "map": Execute.mapActionHandler.bind(this)
+            "map": Execute.mapActionHandler.bind(this),
+            "execution-tree": this.childExecutionTreeHandler.bind(this)
         };
 
         this._options = Execute.spreadify()(defaultOption, options || {});
@@ -139,6 +140,16 @@ class Execute {
 
     static defaultAction(action, executionData, options) {
         return Promise.resolve(action(executionData, options));
+    }
+
+    childExecutionTreeHandler(action, executionData) {
+        /*
+            action should be a valid execution tree
+         */
+
+        return this.executeExecutionTree(action, executionData)
+            .then((response) => response.result);
+
     }
 
     static mapActionHandler(action, executionData, options) {
@@ -203,14 +214,14 @@ class Execute {
     }
 
     static extractStatistics(executionTree){
-        let stat = {
+        let data = {
             steps:[]
         };
 
         executionTree.steps.forEach((step, ipos) => {
-            stat.steps.push({});
+            data.steps.push({});
 
-            let statStep = stat.steps[ipos];
+            let statStep = data.steps[ipos];
 
             statStep.title = step.title;
             statStep.statistics = step.statistics;
@@ -239,7 +250,7 @@ class Execute {
             }
         });
 
-        return Execute.clone(stat);
+        return Execute.clone(data);
     }
 
     use(middleware) {
@@ -407,8 +418,8 @@ class Execute {
     recordStatistics(step, processTime) {
         step.statistics.count++;
 
-        step.statistics.min = Math.min(processTime,step.statistics.min);
-        step.statistics.max = Math.max(processTime,step.statistics.max);
+        step.statistics.min = Math.min(processTime, step.statistics.min);
+        step.statistics.max = Math.max(processTime, step.statistics.max);
 
         step.statistics.total += processTime;
     }
