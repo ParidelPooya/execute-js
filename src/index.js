@@ -374,48 +374,39 @@ class Execute {
 
         this._options.logger.info(`Step: ${step.title}`);
 
-        return new Promise((resolve, reject) => {
+        if ("test" in step) {
+            // if there's a test defined, then actionResult must be a promise
+            // so pass the promise response to goToNextStep
 
-            if ("test" in step) {
-                // if there's a test defined, then actionResult must be a promise
-                // so pass the promise response to goToNextStep
+            return this.goToNextStep(step, executionData).then((childResponse) => {
+                this._options.logger.info(`Child result: ${JSON.stringify(childResponse.result)}`);
 
-                this.goToNextStep(step, executionData).then((childResponse) => {
-                    this._options.logger.info(`Child result: ${JSON.stringify(childResponse.result)}`);
+                childResponse.result = Execute.getByPath(childResponse.result, step.output.map.source);
 
-                    childResponse.result = Execute.getByPath(childResponse.result, step.output.map.source);
+                this._options.logger.info(`Total result: ${JSON.stringify(childResponse.result)}`);
 
-                    this._options.logger.info(`Total result: ${JSON.stringify(childResponse.result)}`);
+                return childResponse;
+            });
+        } else {
+            // Only executing action when there is no test.
+            // By this we can improve performance because we don't need to
+            // combine the result of action and test
+            return this.executeStepActionAndHandleError(step, executionData).then((result) => {
 
-                    resolve(childResponse);
-                }).catch((e) => {
-                    reject(e);
-                });
-            } else {
-                // Only executing action when there is no test.
-                // By this we can improve performance because we don't need to
-                // combine the result of action and test
-                this.executeStepActionAndHandleError(step, executionData).then((result) => {
+                let _result = Execute.getByPath(result, step.output.map.source);
 
-                    let _result = Execute.getByPath(result, step.output.map.source);
+                this._options.logger.info(`Action result: ${JSON.stringify(_result)}`);
 
-                    this._options.logger.info(`Action result: ${JSON.stringify(_result)}`);
-
-                    resolve({result: _result, signal: Execute.executionMode.CONTINUE});
-
-                }).catch((e) => {
-                    reject(e);
-                });
-
-            }
-        });
+                return {result: _result, signal: Execute.executionMode.CONTINUE};
+            });
+        }
     }
 
     recordStatistics(step, processTime) {
         step.statistics.count++;
 
-        step.statistics.min = Math.min(processTime,step.statistics.min) ;
-        step.statistics.max = Math.max(processTime,step.statistics.max) ;
+        step.statistics.min = Math.min(processTime,step.statistics.min);
+        step.statistics.max = Math.max(processTime,step.statistics.max);
 
         step.statistics.total += processTime;
     }
@@ -482,7 +473,7 @@ class Execute {
             return {
                 result: finalResult,
                 signal: finalSignal === Execute.executionMode.STOP_ENTIRE_EXECUTION ?
-                    finalResult : Execute.executionMode.CONTINUE
+                    finalSignal : Execute.executionMode.CONTINUE
             };
         });
 
@@ -498,8 +489,22 @@ Execute.executionMode = {
 };
 
 Execute.executionTreeDefaultSetting = {
-    concurrency: 1
+    title: "No name execution tree",
+    concurrency: 1,
+    cache: {
+        enable: false,
+        ttl: 60
+    },
+    errorHandling: {
+        maxAttempts: 0,
+        tryCondition: () => true,
+        continueOnError: false,
+        onError: () => ({})
+    },
+
 };
+
+
 Execute.stepDefaultSetting = {
     title: "No name step",
     errorHandling: {
