@@ -8,7 +8,8 @@ lab.experiment("Child Execution Tree Test", () => {
     lab.test("returns result from child execution tree", () => {
         let execute = new Execute();
 
-        let childExecutionTree = Execute.prepareExecutionTree({
+        // prepareExecutionTree should run internally against this child execution tree
+        let childExecutionTree = {
             concurrency: 1,
             steps :[
                 {
@@ -16,7 +17,7 @@ lab.experiment("Child Execution Tree Test", () => {
                     action: (data) => ({z: 1})
                 }
             ]
-        });
+        };
 
         let executionTree = Execute.prepareExecutionTree([
             {

@@ -129,11 +129,10 @@ class Execute {
         };
 
         // Add all action handlers
-        this._actions = {
-            "default": Execute.defaultAction.bind(this),
-            "map": Execute.mapActionHandler.bind(this),
-            "execution-tree": this.childExecutionTreeHandler.bind(this)
-        };
+        this._actions = {};
+        this._actions[Execute.builtinActionType.DEFAULT] =  Execute.defaultAction.bind(this);
+        this._actions[Execute.builtinActionType.MAP] = Execute.mapActionHandler.bind(this);
+        this._actions[Execute.builtinActionType.CHILD_EXECUTION_TREE] = this.childExecutionTreeHandler.bind(this);
 
         this._options = Execute.spreadify()(defaultOption, options || {});
     }
@@ -202,12 +201,16 @@ class Execute {
     static prepareExecutionTreeStep(step) {
         let _step = Execute.spreadify(true)(Execute.clone(Execute.stepDefaultSetting), step);
 
-        if(typeof(_step.if) !== "undefined") {
+        if (typeof(_step.if) !== "undefined") {
             Object.keys(_step.if).forEach((cond) => {
                 if (typeof(_step.if[cond]) === "object") {
                     _step.if[cond] = this.prepareExecutionTree(_step.if[cond]);
                 }
             });
+        }
+
+        if (_step.actionType === Execute.builtinActionType.CHILD_EXECUTION_TREE) {
+            _step.action = this.prepareExecutionTree(_step.action);
         }
 
         return _step;
@@ -574,6 +577,12 @@ Execute.executionMode = {
     CONTINUE: 0,
     STOP_LEVEL_EXECUTION: 1,
     STOP_ENTIRE_EXECUTION: 2
+};
+
+Execute.builtinActionType = {
+    DEFAULT: "default",
+    MAP: "map",
+    CHILD_EXECUTION_TREE: "execution-tree"
 };
 
 Execute.executionTreeDefaultSetting = {
