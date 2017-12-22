@@ -269,7 +269,7 @@ class Execute {
     }
 
     run(executionTree, executionData) {
-        return this.executeExecutionTreeSteps(executionTree, executionData)
+        return this.executeExecutionTree(executionTree, executionData)
             .then((response) => response.result);
     }
 
@@ -289,7 +289,7 @@ class Execute {
         else {
             // TODO: better handeling if the next step is missing.
             return nextStep ?
-                this.executeExecutionTreeSteps(nextStep, executionData) :
+                this.executeExecutionTree(nextStep, executionData) :
                 Promise.reject("Unhandled scenario");
         }
     }
@@ -542,10 +542,13 @@ class Execute {
     executeExecutionTree(executionTree, executionData) {
         return this.executeExecutionTreeWithCache(executionTree, executionData)
             .catch((e) => {
-                return executionTree.errorHandling.onError(e ,executionData, this._options)
+                return Promise.resolve(executionTree.errorHandling.onError(e ,executionData, this._options))
                     .then( (data)=> {
                         if (executionTree.errorHandling.continueOnError) {
-                            return data;
+                            return {
+                                result: data,
+                                signal: Execute.executionMode.CONTINUE
+                            };
                         } else {
                             return Promise.reject(e);
                         }

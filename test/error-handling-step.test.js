@@ -4,7 +4,7 @@ exports.lab = lab;
 
 let Execute = require("../src/index");
 
-lab.experiment("Error Handling Test", () => {
+lab.experiment("Error Handling Step Test", () => {
 
     lab.test("should continue after throwing error", () => {
         let execute = new Execute();
