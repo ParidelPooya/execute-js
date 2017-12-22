@@ -53,9 +53,6 @@ lab.experiment("Caching Execution Tree Test", () => {
             });
 
             return execute.run(executionTree, executionData).then( (result)=> {
-                console.log("****result");
-                console.log(result);
-
                 lab.expect(result.a).to.equal(1);
             });
 
