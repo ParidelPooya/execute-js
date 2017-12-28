@@ -143,10 +143,14 @@ class Execute {
 
     childExecutionTreeHandler(action, executionData) {
         /*
-            action should be a valid execution tree
+            action should be a object with
+            executionTree:  a valid execution tree
+            executionData: optional, data to pass to execution tree, if not specified then entire data will pass
          */
 
-        return this.executeExecutionTree(action, executionData)
+        let data = action.executionData ? action.executionData(executionData) : executionData;
+
+        return this.executeExecutionTree(action.executionTree, data)
             .then((response) => response.result);
 
     }
@@ -210,7 +214,7 @@ class Execute {
         }
 
         if (_step.actionType === Execute.builtinActionType.CHILD_EXECUTION_TREE) {
-            _step.action = this.prepareExecutionTree(_step.action);
+            _step.action.executionTree = this.prepareExecutionTree(_step.action.executionTree);
         }
 
         return _step;
