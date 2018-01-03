@@ -134,7 +134,7 @@ lab.experiment("Basic Steps Test", () => {
         });
     });
 
-    lab.test("2 objects should be combined", () => {
+    lab.test("2nd object should override the first", () => {
         let execute = new Execute();
 
         let executionTree = Execute.prepareExecutionTree([
@@ -153,8 +153,8 @@ lab.experiment("Basic Steps Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
+            lab.expect(result.a.y).to.be.undefined();
             lab.expect(result.a.x).to.equal(1);
-            lab.expect(result.a.y).to.equal(1);
 
         });
     });
@@ -220,6 +220,43 @@ lab.experiment("Basic Steps Test", () => {
 
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.a).to.equal(1);
+        });
+    });
+
+    lab.test("Adding new attrib to existing object should work", () => {
+        let execute = new Execute();
+
+        let executionTree = Execute.prepareExecutionTree([
+            {
+                title:"step 1",
+                action: (data) => ({
+                    title: "title",
+                    code: 123
+                }),
+                output: {
+                    map:{
+                        destination: "agent"
+                    }
+
+                }
+            },
+            {
+                title:"step 2",
+                action: (data) => "VCLD",
+                output: {
+                    map:{
+                        destination: "agent.office"
+                    }
+                }
+            }
+        ]);
+
+        let executionData = {
+            sub_id :123
+        };
+
+        return execute.run(executionTree, executionData).then( (result)=> {
+            lab.expect(result.agent.office).to.equal("VCLD");
         });
     });
 

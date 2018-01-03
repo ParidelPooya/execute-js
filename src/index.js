@@ -13,59 +13,59 @@ class Execute {
         return obj;
     }
 
-    static addPrefixToPath(path, data) {
-        let obj = {};
-        let pointer = obj;
+    static copyData(copyTo, copyFrom, path) {
+        let pointer = copyTo;
 
         let keys = path.split(".");
 
         for (let i = 0; i < keys.length; i++) {
-            pointer[keys[i]] = {};
 
             if (i === keys.length - 1) {
-                pointer[keys[i]] = data;
+                pointer[keys[i]] = copyFrom;
             } else {
+                if(pointer[keys[i]] === undefined) {
+                    pointer[keys[i]] = {};
+                }
+
                 pointer = pointer[keys[i]];
             }
         }
-
-        return obj;
     }
 
     static spreadify(deepCopy) {
         return function () {
             let spreadArgs = {};
-            let isArray = true;
-            let isEmpty = true;
 
             for (let i = 0; i < arguments.length; i++) {
                 let currentArg = arguments[i];
 
-                if (Array.isArray(currentArg) && isArray ) {
-                    if (isEmpty) {
-                        spreadArgs = [...currentArg];
-                        isEmpty = false;
+                Object.keys(currentArg).map((key) => {
+                    if (deepCopy && typeof(spreadArgs[key]) === "object" && currentArg[key] !== null
+                    ) {
+                        spreadArgs[key] = Execute.spreadify(deepCopy)(spreadArgs[key], currentArg[key]);
                     } else {
-                        spreadArgs = spreadArgs.concat(currentArg);
+                        spreadArgs[key] = currentArg[key];
                     }
-                } else {
-                    Object.keys(currentArg).map((key) => {
-                        isArray = false;
-
-                        if (deepCopy &&
-                            typeof(spreadArgs[key]) === "object" && spreadArgs[key] !== null &&
-                            currentArg[key] !== null
-                        ) {
-                            spreadArgs[key] = Execute.spreadify(deepCopy)(spreadArgs[key], currentArg[key]);
-                        } else {
-                            spreadArgs[key] = currentArg[key];
-                        }
-                    });
-                }
+                });
 
             }
             return spreadArgs;
         };
+    }
+
+    static extend(dest, extendFrom) {
+        if (Array.isArray(extendFrom)) {
+            if (Array.isArray(dest)) {
+                return dest.concat(extendFrom);
+            } else {
+                return extendFrom;
+            }
+        }
+
+        Object.keys(extendFrom).map((key) => {
+            dest[key] = extendFrom[key];
+        });
+        return dest;
     }
 
     static clone(obj) {
@@ -453,26 +453,20 @@ class Execute {
 
                         if (step.output.accessibleToNextSteps) {
                             if (step.output.map.destination.length !== 0) {
-                                executionData = Execute.spreadify()(executionData, Execute.addPrefixToPath(step.output.map.destination, response.result));
-                            }
-                            else {
-                                executionData = Execute.spreadify()(executionData, response.result);
+                                Execute.copyData(executionData, response.result, step.output.map.destination);
+                            } else {
+                                executionData = Execute.extend(executionData, response.result);
                             }
                         }
-
-                        let _stepResult = {};
 
                         if (step.output.addToResult) {
                             if (step.output.map.destination.length !== 0) {
-                                _stepResult = Execute.addPrefixToPath(step.output.map.destination, response.result);
+                                Execute.copyData(finalResult, response.result, step.output.map.destination);
                             }
                             else {
-                                _stepResult = response.result;
+                                finalResult = Execute.extend(finalResult, response.result);
                             }
                         }
-
-                        // TODO : this one is expensive
-                        finalResult = Execute.spreadify(true)(finalResult, _stepResult);
 
                         return {result: finalResult, signal: finalSignal};
                     });

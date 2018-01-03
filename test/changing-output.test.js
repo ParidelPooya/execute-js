@@ -118,7 +118,7 @@ lab.experiment("Changing Output Tests", () => {
 
         return execute.run(executionTree, executionData).then( (result)=> {
             lab.expect(result.differentNode.subnode.b).to.equal(2);
-            lab.expect(result.differentNode.subnode.x).to.equal(2);
+            lab.expect(result.differentNode.subnode.x).to.be.undefined();
             lab.expect(result.c).to.be.undefined();
         });
     });

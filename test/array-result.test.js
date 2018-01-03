@@ -5,14 +5,14 @@ let Execute = require("../src/index");
 
 lab.experiment("Array Result Test", () => {
 
-    lab.test("Two array should concat to one", () => {
+    lab.test("Second array should override the first one when destination is not empty", () => {
         let execute = new Execute();
 
         let executionTree = Execute.prepareExecutionTree([
             {
                 title:"step 0",
                 action: (data)=>{
-                    return [0,1,2];
+                    return [0,1,2,4,5];
                 },
                 output: {
                     map: {
@@ -50,27 +50,14 @@ lab.experiment("Array Result Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.main.length).to.equal(6);
+            lab.expect(result.main.length).to.equal(3);
         });
     });
 
-    lab.test("result of object and array should be an object", () => {
+    lab.test("Arrays should concat when destination is empty", () => {
         let execute = new Execute();
 
         let executionTree = Execute.prepareExecutionTree([
-            {
-                title:"step 0",
-                action: (data)=>{
-                    return {a:1, b:2};
-                },
-                output: {
-                    map: {
-                        source: "",
-                        destination: "main"
-                    }
-                }
-
-            },
             {
                 title:"step 1",
                 test: data => data.Code === "code1",
@@ -79,7 +66,19 @@ lab.experiment("Array Result Test", () => {
                         {
                             title:"step 2",
                             action: (data)=> {
-                                return [2,3,4];
+                                return [1];
+                            }
+                        },
+                        {
+                            title:"step 2",
+                            action: (data)=> {
+                                return [2];
+                            }
+                        },
+                        {
+                            title:"step 2",
+                            action: (data)=> {
+                                return [3];
                             }
                         }
                     ]
@@ -100,8 +99,9 @@ lab.experiment("Array Result Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(Array.isArray(result.main)).to.equal(false);
+            lab.expect(result.main.length).to.equal(3);
         });
     });
+
 
 });
