@@ -13,25 +13,6 @@ class Execute {
         return obj;
     }
 
-    static addPrefixToPath(path, data) {
-        let obj = {};
-        let pointer = obj;
-
-        let keys = path.split(".");
-
-        for (let i = 0; i < keys.length; i++) {
-            pointer[keys[i]] = {};
-
-            if (i === keys.length - 1) {
-                pointer[keys[i]] = data;
-            } else {
-                pointer = pointer[keys[i]];
-            }
-        }
-
-        return obj;
-    }
-
     static copyData(copyTo, copyFrom, path) {
         let pointer = copyTo;
 
@@ -54,33 +35,18 @@ class Execute {
     static spreadify(deepCopy) {
         return function () {
             let spreadArgs = {};
-            let isArray = true;
-            let isEmpty = true;
 
             for (let i = 0; i < arguments.length; i++) {
                 let currentArg = arguments[i];
 
-                if (Array.isArray(currentArg) && isArray ) {
-                    if (isEmpty) {
-                        spreadArgs = [...currentArg];
-                        isEmpty = false;
+                Object.keys(currentArg).map((key) => {
+                    if (deepCopy && typeof(spreadArgs[key]) === "object" && currentArg[key] !== null
+                    ) {
+                        spreadArgs[key] = Execute.spreadify(deepCopy)(spreadArgs[key], currentArg[key]);
                     } else {
-                        spreadArgs = spreadArgs.concat(currentArg);
+                        spreadArgs[key] = currentArg[key];
                     }
-                } else {
-                    Object.keys(currentArg).map((key) => {
-                        isArray = false;
-
-                        if (deepCopy &&
-                            typeof(spreadArgs[key]) === "object" && spreadArgs[key] !== null &&
-                            currentArg[key] !== null
-                        ) {
-                            spreadArgs[key] = Execute.spreadify(deepCopy)(spreadArgs[key], currentArg[key]);
-                        } else {
-                            spreadArgs[key] = currentArg[key];
-                        }
-                    });
-                }
+                });
 
             }
             return spreadArgs;
@@ -484,29 +450,6 @@ class Execute {
                         this.recordStatistics(step, processTime);
 
                         finalSignal = Math.max(finalSignal, response.signal);
-
-                        // if (step.output.accessibleToNextSteps) {
-                        //     if (step.output.map.destination.length !== 0) {
-                        //         executionData = Execute.spreadify()(executionData, Execute.addPrefixToPath(step.output.map.destination, response.result));
-                        //     }
-                        //     else {
-                        //         executionData = Execute.spreadify()(executionData, response.result);
-                        //     }
-                        // }
-                        //
-                        // let _stepResult = {};
-                        //
-                        // if (step.output.addToResult) {
-                        //     if (step.output.map.destination.length !== 0) {
-                        //         _stepResult = Execute.addPrefixToPath(step.output.map.destination, response.result);
-                        //     }
-                        //     else {
-                        //         _stepResult = response.result;
-                        //     }
-                        // }
-                        //
-                        // // TODO : this one is expensive
-                        // finalResult = Execute.spreadify(true)(finalResult, _stepResult);
 
                         if (step.output.accessibleToNextSteps) {
                             if (step.output.map.destination.length !== 0) {

@@ -223,4 +223,41 @@ lab.experiment("Basic Steps Test", () => {
         });
     });
 
+    lab.test("Adding new attrib to existing object should work", () => {
+        let execute = new Execute();
+
+        let executionTree = Execute.prepareExecutionTree([
+            {
+                title:"step 1",
+                action: (data) => ({
+                    title: "title",
+                    code: 123
+                }),
+                output: {
+                    map:{
+                        destination: "agent"
+                    }
+
+                }
+            },
+            {
+                title:"step 2",
+                action: (data) => "VCLD",
+                output: {
+                    map:{
+                        destination: "agent.office"
+                    }
+                }
+            }
+        ]);
+
+        let executionData = {
+            sub_id :123
+        };
+
+        return execute.run(executionTree, executionData).then( (result)=> {
+            lab.expect(result.agent.office).to.equal("VCLD");
+        });
+    });
+
 });
