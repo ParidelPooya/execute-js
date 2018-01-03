@@ -134,7 +134,7 @@ lab.experiment("Basic Steps Test", () => {
         });
     });
 
-    lab.test("2 objects should be combined", () => {
+    lab.test("2nd object should override the first", () => {
         let execute = new Execute();
 
         let executionTree = Execute.prepareExecutionTree([
@@ -153,8 +153,8 @@ lab.experiment("Basic Steps Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
+            lab.expect(result.a.y).to.be.undefined();
             lab.expect(result.a.x).to.equal(1);
-            lab.expect(result.a.y).to.equal(1);
 
         });
     });

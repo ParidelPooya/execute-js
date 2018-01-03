@@ -32,6 +32,25 @@ class Execute {
         return obj;
     }
 
+    static copyData(copyTo, copyFrom, path) {
+        let pointer = copyTo;
+
+        let keys = path.split(".");
+
+        for (let i = 0; i < keys.length; i++) {
+
+            if (i === keys.length - 1) {
+                pointer[keys[i]] = copyFrom;
+            } else {
+                if(pointer[keys[i]] === undefined) {
+                    pointer[keys[i]] = {};
+                }
+
+                pointer = pointer[keys[i]];
+            }
+        }
+    }
+
     static spreadify(deepCopy) {
         return function () {
             let spreadArgs = {};
@@ -66,6 +85,21 @@ class Execute {
             }
             return spreadArgs;
         };
+    }
+
+    static extend(dest, extendFrom) {
+        if (Array.isArray(extendFrom)) {
+            if (Array.isArray(dest)) {
+                return dest.concat(extendFrom);
+            } else {
+                return extendFrom;
+            }
+        }
+
+        Object.keys(extendFrom).map((key) => {
+            dest[key] = extendFrom[key];
+        });
+        return dest;
     }
 
     static clone(obj) {
@@ -451,28 +485,45 @@ class Execute {
 
                         finalSignal = Math.max(finalSignal, response.signal);
 
+                        // if (step.output.accessibleToNextSteps) {
+                        //     if (step.output.map.destination.length !== 0) {
+                        //         executionData = Execute.spreadify()(executionData, Execute.addPrefixToPath(step.output.map.destination, response.result));
+                        //     }
+                        //     else {
+                        //         executionData = Execute.spreadify()(executionData, response.result);
+                        //     }
+                        // }
+                        //
+                        // let _stepResult = {};
+                        //
+                        // if (step.output.addToResult) {
+                        //     if (step.output.map.destination.length !== 0) {
+                        //         _stepResult = Execute.addPrefixToPath(step.output.map.destination, response.result);
+                        //     }
+                        //     else {
+                        //         _stepResult = response.result;
+                        //     }
+                        // }
+                        //
+                        // // TODO : this one is expensive
+                        // finalResult = Execute.spreadify(true)(finalResult, _stepResult);
+
                         if (step.output.accessibleToNextSteps) {
                             if (step.output.map.destination.length !== 0) {
-                                executionData = Execute.spreadify()(executionData, Execute.addPrefixToPath(step.output.map.destination, response.result));
-                            }
-                            else {
-                                executionData = Execute.spreadify()(executionData, response.result);
+                                Execute.copyData(executionData, response.result, step.output.map.destination);
+                            } else {
+                                executionData = Execute.extend(executionData, response.result);
                             }
                         }
-
-                        let _stepResult = {};
 
                         if (step.output.addToResult) {
                             if (step.output.map.destination.length !== 0) {
-                                _stepResult = Execute.addPrefixToPath(step.output.map.destination, response.result);
+                                Execute.copyData(finalResult, response.result, step.output.map.destination);
                             }
                             else {
-                                _stepResult = response.result;
+                                finalResult = Execute.extend(finalResult, response.result);
                             }
                         }
-
-                        // TODO : this one is expensive
-                        finalResult = Execute.spreadify(true)(finalResult, _stepResult);
 
                         return {result: finalResult, signal: finalSignal};
                     });
