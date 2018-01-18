@@ -35,5 +35,79 @@ lab.experiment("Loop array Test", () => {
         });
     });
 
+    lab.test("map middleware should accept child execution tree", () => {
+        let execute = new Execute();
+
+        let childExecutionTree = Execute.prepareExecutionTree([
+            {
+                title: "step c1",
+                action: (data) => ({a:data.i})
+            },
+            {
+                title: "step c2",
+                action: (data) => ({b:data.i + 1})
+            }
+        ]);
+
+        let executionTree = Execute.prepareExecutionTree([
+            {
+                title: "step 1",
+                actionType: "map",
+                action:{
+                    array: (data) => data.array,
+                    executionTree: childExecutionTree
+                }
+            }
+        ]);
+
+        let executionData = {
+            array :[{i:1},{i:2},{i:3}]
+        };
+
+        return execute.run(executionTree, executionData).then( (result)=> {
+            lab.expect(result.length).to.equal(3);
+        });
+    });
+
+    lab.test("map middleware should accept child execution tree and custom execution data", () => {
+        let execute = new Execute();
+
+        let childExecutionTree = Execute.prepareExecutionTree([
+            {
+                title: "step c1",
+                action: (data) => ({a:data.item.i})
+            },
+            {
+                title: "step c2",
+                action: (data) => ({b:data.item.i + 1})
+            }
+        ]);
+
+        let executionTree = Execute.prepareExecutionTree([
+            {
+                title: "step 1",
+                actionType: "map",
+                action:{
+                    array: (data) => data.array,
+                    executionData: (data, item) => {
+                        return {
+                            data: data,
+                            item: item
+                        };
+                    },
+                    executionTree: childExecutionTree
+                }
+            }
+        ]);
+
+        let executionData = {
+            array :[{i:1},{i:2},{i:3}]
+        };
+
+        return execute.run(executionTree, executionData).then( (result)=> {
+            lab.expect(result.length).to.equal(3);
+            lab.expect(result[0].a).to.equal(1);
+        });
+    });
 
 });
