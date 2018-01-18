@@ -237,6 +237,10 @@ class Execute {
             _step.action.executionTree = this.prepareExecutionTree(_step.action.executionTree);
         }
 
+        if (_step.actionType === Execute.builtinActionType.MAP && _step.action.executionTree !== undefined) {
+            _step.action.executionTree = this.prepareExecutionTree(_step.action.executionTree);
+        }
+
         return _step;
     }
 

@@ -72,7 +72,7 @@ lab.experiment("Loop array Test", () => {
     lab.test("map middleware should accept child execution tree and custom execution data", () => {
         let execute = new Execute();
 
-        let childExecutionTree = Execute.prepareExecutionTree([
+        let childExecutionTree = [
             {
                 title: "step c1",
                 action: (data) => ({a:data.item.i})
@@ -81,7 +81,7 @@ lab.experiment("Loop array Test", () => {
                 title: "step c2",
                 action: (data) => ({b:data.item.i + 1})
             }
-        ]);
+        ];
 
         let executionTree = Execute.prepareExecutionTree([
             {
