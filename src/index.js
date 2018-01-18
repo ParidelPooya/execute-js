@@ -132,7 +132,7 @@ class Execute {
         this._actions = {};
         this._actions[Execute.builtinActionType.DEFAULT] =  Execute.defaultAction.bind(this);
         this._actions[Execute.builtinActionType.MAP] = Execute.mapActionHandler.bind(this);
-        this._actions[Execute.builtinActionType.CHILD_EXECUTION_TREE] = this.childExecutionTreeHandler.bind(this);
+        this._actions[Execute.builtinActionType.CHILD_EXECUTION_TREE] = Execute.childExecutionTreeHandler.bind(this);
 
         this._options = Execute.spreadify()(defaultOption, options || {});
     }
@@ -141,7 +141,7 @@ class Execute {
         return Promise.resolve(action(executionData, options));
     }
 
-    childExecutionTreeHandler(action, executionData) {
+    static childExecutionTreeHandler(action, executionData) {
         /*
             action should be a object with
             executionTree:  a valid execution tree
@@ -160,13 +160,18 @@ class Execute {
             action should be object with
             {
                 array: function that produce an array,
+
                 reducer: child step to execute for each element in the array.
+
+                executionTree:  instead of reducer we can provide child executionTree to execute
+                executionData(data, item): optional, data to pass to execution tree, if not specified then array item will pass.
+
             }
          */
         let final = [];
 
-        return action.array(executionData).reduce((promise, item) => {
-            return promise
+        if (action.reducer !== undefined) {
+            return action.array(executionData).reduce((promise, item) => promise
                 .then(() => {
                     return Promise
                         .resolve(action.reducer(item, options))
@@ -175,9 +180,24 @@ class Execute {
                             return final;
                         });
                 })
-                .catch(console.error);
+                .catch(console.error)
+                , Promise.resolve()
+            );
+        } else {
+            return action.array(executionData).reduce((promise, item) => promise
+                .then(() => {
+                    let data = action.executionData ? action.executionData(executionData, item) : item;
 
-        }, Promise.resolve());
+                    return this.executeExecutionTree(action.executionTree, data)
+                        .then((response) => {
+                            final.push(response.result);
+                            return final;
+                        });
+                })
+                .catch(console.error)
+                , Promise.resolve()
+            );
+        }
     }
 
     static prepareExecutionTree(executionTree) {
