@@ -48,7 +48,7 @@ lab.experiment("Middleware Test", () => {
             execute.use(middleware);
         }
         catch(e){
-            lab.expect(e.message).to.equal("middleware action is missing");
+            lab.expect(e.message).to.equal("Middleware action is missing");
             done();
         }
     });
@@ -65,7 +65,7 @@ lab.experiment("Middleware Test", () => {
             execute.use(middleware);
         }
         catch(e){
-            lab.expect(e.message).to.equal("middleware name is missing");
+            lab.expect(e.message).to.equal("Middleware name is missing");
             done();
         }
     });
