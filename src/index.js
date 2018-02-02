@@ -1,144 +1,31 @@
+const Utility = require("./utility");
+
 class Execute {
-    static getByPath(obj, key) {
-        if (key.length === 0) {
-            return obj;
-        }
-
-        let keys = key.split(".");
-
-        for (let i = 0; i < keys.length; i++) {
-            obj = obj[keys[i]];
-        }
-
-        return obj;
-    }
-
-    static copyData(copyTo, copyFrom, path) {
-        let pointer = copyTo;
-
-        let keys = path.split(".");
-
-        for (let i = 0; i < keys.length; i++) {
-
-            if (i === keys.length - 1) {
-                pointer[keys[i]] = copyFrom;
-            } else {
-                if(pointer[keys[i]] === undefined) {
-                    pointer[keys[i]] = {};
-                }
-
-                pointer = pointer[keys[i]];
-            }
-        }
-    }
-
-    static spreadify(deepCopy) {
-        return function () {
-            let spreadArgs = {};
-
-            for (let i = 0; i < arguments.length; i++) {
-                let currentArg = arguments[i];
-
-                Object.keys(currentArg).map((key) => {
-                    if (deepCopy && typeof(spreadArgs[key]) === "object" && currentArg[key] !== null
-                    ) {
-                        spreadArgs[key] = Execute.spreadify(deepCopy)(spreadArgs[key], currentArg[key]);
-                    } else {
-                        spreadArgs[key] = currentArg[key];
-                    }
-                });
-
-            }
-            return spreadArgs;
-        };
-    }
-
-    static extend(dest, extendFrom) {
-        if (Array.isArray(extendFrom)) {
-            if (Array.isArray(dest)) {
-                return dest.concat(extendFrom);
-            } else {
-                return extendFrom;
-            }
-        }
-
-        Object.keys(extendFrom).map((key) => {
-            dest[key] = extendFrom[key];
-        });
-        return dest;
-    }
-
-    static clone(obj) {
-        let copy;
-
-        // Handle the 3 simple types, and null or undefined
-        if (typeof(obj) !== "object" || obj === null) {
-            return obj;
-        }
-
-        // I am only using this clone to clone step default settings
-        // So there is no need to handle Date ot Array for now
-        // // Handle Date
-        // if (obj instanceof Date) {
-        //     copy = new Date();
-        //     copy.setTime(obj.getTime());
-        //     return copy;
-        // }
-        //
-        // // Handle Array
-        // if (obj instanceof Array) {
-        //     copy = [];
-        //     for (let i = 0, len = obj.length; i < len; i++) {
-        //         copy[i] = Execute.clone(obj[i]);
-        //     }
-        //     return copy;
-        // }
-        //
-        // // Handle Object
-        // if (obj instanceof Object) {
-        //     copy = {};
-        //     for (let attr in obj) {
-        //         if (obj.hasOwnProperty(attr)) {
-        //             copy[attr] = Execute.clone(obj[attr]);
-        //         }
-        //     }
-        //     return copy;
-        // }
-
-        // Handle Array
-        if (obj instanceof Array) {
-            copy = [];
-            for (let i = 0, len = obj.length; i < len; i++) {
-                copy[i] = Execute.clone(obj[i]);
-            }
-            return copy;
-        }
-
-        copy = {};
-        for (let attr in obj) {
-            copy[attr] = Execute.clone(obj[attr]);
-        }
-        return copy;
-
-    }
 
     constructor(options) {
         let defaultOption = {
             logger: console,
+            context: {},
             cache: require("./tiny-cache")
         };
 
         // Add all action handlers
         this._actions = {};
         this._actions[Execute.builtinActionType.DEFAULT] =  Execute.defaultAction.bind(this);
+        this._actions[Execute.builtinActionType.PROMISE] =  Execute.promiseAction.bind(this);
+
         this._actions[Execute.builtinActionType.MAP] = Execute.mapActionHandler.bind(this);
         this._actions[Execute.builtinActionType.CHILD_EXECUTION_TREE] = Execute.childExecutionTreeHandler.bind(this);
 
-        this._options = Execute.spreadify()(defaultOption, options || {});
+        this._options = Utility.spreadify()(defaultOption, options || {});
     }
 
     static defaultAction(action, executionData, options) {
         return Promise.resolve(action(executionData, options));
+    }
+
+    static promiseAction(action, executionData, options) {
+        return action(executionData, options);
     }
 
     static childExecutionTreeHandler(action, executionData) {
@@ -213,7 +100,7 @@ class Execute {
             _executionTree = executionTree;
         }
 
-        _executionTree = Execute.spreadify(true)(Execute.executionTreeDefaultSetting, _executionTree);
+        _executionTree = Utility.spreadify(true)(Execute.executionTreeDefaultSetting, _executionTree);
 
         _executionTree.steps.forEach((step, ipos) => {
             _executionTree.steps[ipos] = Execute.prepareExecutionTreeStep(step);
@@ -223,7 +110,7 @@ class Execute {
     }
 
     static prepareExecutionTreeStep(step) {
-        let _step = Execute.spreadify(true)(Execute.clone(Execute.stepDefaultSetting), step);
+        let _step = Utility.spreadify(true)(Utility.clone(Execute.stepDefaultSetting), step);
 
         if (typeof(_step.if) !== "undefined") {
             Object.keys(_step.if).forEach((cond) => {
@@ -277,7 +164,7 @@ class Execute {
             }
         });
 
-        return Execute.clone(data);
+        return Utility.clone(data);
     }
 
     use(middleware) {
@@ -295,11 +182,11 @@ class Execute {
 
     addActionMiddleware(middleware) {
         if (!middleware.action) {
-            throw new Error("middleware action is missing");
+            throw new Error("Middleware action is missing");
         }
 
         if (!middleware.name) {
-            throw new Error("middleware name is missing");
+            throw new Error("Middleware name is missing");
         }
 
         this._actions[middleware.name] = middleware.action;
@@ -313,22 +200,29 @@ class Execute {
 
     goToNextStep(step, executionData) {
         const testResult = typeof step.test === "function"
-            ? step.test(executionData) // call the test with the results from the action
+            ? step.test(executionData, this._options) // call the test with the results from the action
             : step.test;
 
-        this._options.logger.info(`Test result: ${testResult}`);
+        this._options.logger.info({
+            step: step.title,
+            event: Execute.eventsTitle.testResult,
+            testResult: testResult,
+            ...this._options.context
+        });
+
         // get a reference to the next step based on the test result
         const nextStep = typeof(step.if[testResult]) !=="undefined" ? step.if[testResult] : step.if.default;
 
-        if (typeof(nextStep) === "number") {
+        if (nextStep === undefined) {
+            // TODO: better handeling if the next step is missing.
+            return Promise.reject("Unhandled scenario");
+
+        } else if (typeof(nextStep) === "number") {
             // next step is not an execution tree but a predefined signal
             return Promise.resolve({result: {}, signal: nextStep});
         }
         else {
-            // TODO: better handeling if the next step is missing.
-            return nextStep ?
-                this.executeExecutionTree(nextStep, executionData) :
-                Promise.reject("Unhandled scenario");
+            return this.executeExecutionTree(nextStep, executionData);
         }
     }
 
@@ -337,16 +231,26 @@ class Execute {
         let retryPromise = (tries)=> {
             let action = this._actions[step.actionType](step.action, executionData, this._options);
 
-            return Promise.resolve(action).catch( (err) => {
+            return action.catch( (err) => {
                 // update statistics
                 step.statistics.errors++;
 
                 if (--tries > 0 && step.errorHandling.tryCondition(err)) {
-                    this._options.logger.warn(`Step: ${step.title} failed. Retrying.`);
+                    this._options.logger.warn({
+                        step: step.title,
+                        event: Execute.eventsTitle.actionRetry,
+                        cause: err.message,
+                        ...this._options.context
+                    });
 
                     return retryPromise(tries);
                 } else {
-                    this._options.logger.error(`Step: ${step.title} action failed.`);
+                    this._options.logger.error({
+                        step: step.title,
+                        event: Execute.eventsTitle.actionFailed,
+                        cause: err.message,
+                        ...this._options.context
+                    });
 
                     return Promise.reject(err);
                 }
@@ -367,13 +271,22 @@ class Execute {
                 .then((data) => {
                     if (data !== undefined) {
                         // update statistics
-                        console.log("Data exist in cache");
+                        this._options.logger.info({
+                            step: step.title,
+                            event: Execute.eventsTitle.cacheHit,
+                            ...this._options.context
+                        });
+
                         step.statistics.cache.hitsNo++;
 
                         step.statistics.cache.hitsTotal += (new Date() - startTime);
                         return data;
                     } else {
-                        console.log("Data is not exist in cache");
+                        this._options.logger.info({
+                            step: step.title,
+                            event: Execute.eventsTitle.cacheMiss,
+                            ...this._options.context
+                        });
 
                         // update statistics
                         step.statistics.cache.missesNo++;
@@ -382,7 +295,13 @@ class Execute {
                         return this.executeStepActionWithRetry(step, executionData).then((data) => {
                             return this._options.cache.set(cacheKey, data, step.cache.ttl)
                                 .then((set_result) => {
-                                    console.log("Set Data in Cache result:", set_result);
+                                    this._options.logger.info({
+                                        step: step.title,
+                                        event: Execute.eventsTitle.cacheSet,
+                                        setResult: set_result,
+                                        ...this._options.context
+                                    });
+
                                     step.statistics.cache.missesTotal += (new Date() - startTime);
                                     return data;
                                 });
@@ -401,8 +320,21 @@ class Execute {
                 return Promise.resolve(step.errorHandling.onError(e ,executionData, this._options))
                     .then( (data)=> {
                         if (step.errorHandling.continueOnError) {
+                            this._options.logger.warn({
+                                step: step.title,
+                                event: Execute.eventsTitle.continueOnError,
+                                ...this._options.context
+                            });
+
                             return data;
                         } else {
+                            this._options.logger.error({
+                                step: step.title,
+                                event: Execute.eventsTitle.actionFailed,
+                                cause: e.message,
+                                ...this._options.context
+                            });
+
                             return Promise.reject(e);
                         }
                     });
@@ -412,18 +344,25 @@ class Execute {
 
     processStep(step, executionData) {
 
-        this._options.logger.info(`Step: ${step.title}`);
+        this._options.logger.info({
+            step: step.title,
+            event: Execute.eventsTitle.stepStartProcessing,
+            ...this._options.context
+        });
 
         if ("test" in step) {
             // if there's a test defined, then actionResult must be a promise
             // so pass the promise response to goToNextStep
 
             return this.goToNextStep(step, executionData).then((childResponse) => {
-                this._options.logger.info(`Child result: ${JSON.stringify(childResponse.result)}`);
 
-                childResponse.result = Execute.getByPath(childResponse.result, step.output.map.source);
+                this._options.logger.info({
+                    step: step.title,
+                    event: Execute.eventsTitle.childFinished,
+                    ...this._options.context
+                });
 
-                this._options.logger.info(`Total result: ${JSON.stringify(childResponse.result)}`);
+                childResponse.result = Utility.getByPath(childResponse.result, step.output.map.source);
 
                 return childResponse;
             });
@@ -433,9 +372,13 @@ class Execute {
             // combine the result of action and test
             return this.executeStepActionAndHandleError(step, executionData).then((result) => {
 
-                let _result = Execute.getByPath(result, step.output.map.source);
+                let _result = Utility.getByPath(result, step.output.map.source);
 
-                this._options.logger.info(`Action result: ${JSON.stringify(_result)}`);
+                this._options.logger.info({
+                    step: step.title,
+                    event: Execute.eventsTitle.stepFinished,
+                    ...this._options.context
+                });
 
                 return {result: _result, signal: Execute.executionMode.CONTINUE};
             });
@@ -473,18 +416,18 @@ class Execute {
 
                         if (step.output.accessibleToNextSteps) {
                             if (step.output.map.destination.length !== 0) {
-                                Execute.copyData(executionData, response.result, step.output.map.destination);
+                                Utility.copyData(executionData, response.result, step.output.map.destination);
                             } else {
-                                executionData = Execute.extend(executionData, response.result);
+                                executionData = Utility.extend(executionData, response.result);
                             }
                         }
 
                         if (step.output.addToResult) {
                             if (step.output.map.destination.length !== 0) {
-                                Execute.copyData(finalResult, response.result, step.output.map.destination);
+                                Utility.copyData(finalResult, response.result, step.output.map.destination);
                             }
                             else {
-                                finalResult = Execute.extend(finalResult, response.result);
+                                finalResult = Utility.extend(finalResult, response.result);
                             }
                         }
 
@@ -493,15 +436,16 @@ class Execute {
             });
         });
 
-        function doNextAction() {
+        const doNextAction = () => {
             if (i < ps.length && finalSignal === Execute.executionMode.CONTINUE) {
                 return ps[i++]().then(doNextAction);
             }
-        }
+        };
 
         while (i < executionTree.concurrency && i < ps.length) {
             listOfPromises.push(doNextAction());
         }
+
         return Promise.all(listOfPromises).then(() => {
             return {
                 result: finalResult,
@@ -520,11 +464,21 @@ class Execute {
                     executionTree.statistics.errors++;
 
                     if (--tries > 0 && executionTree.errorHandling.tryCondition(err)) {
-                        this._options.logger.warn(`Execution Tree: ${executionTree.title} failed. Retrying.`);
+                        this._options.logger.warn({
+                            step: executionTree.title,
+                            event: Execute.eventsTitle.executionTreeActionRetry,
+                            cause: err.message,
+                            ...this._options.context
+                        });
 
                         return retryPromise(tries);
                     } else {
-                        this._options.logger.error(`Execution Tree: ${executionTree.title} failed.`);
+                        this._options.logger.error({
+                            step: executionTree.title,
+                            event: Execute.eventsTitle.executionTreeActionFailed,
+                            cause: err.message,
+                            ...this._options.context
+                        });
 
                         return Promise.reject(err);
                     }
@@ -542,7 +496,11 @@ class Execute {
             return this._options.cache.get(cacheKey)
                 .then((data) => {
                     if (data !== undefined) {
-                        console.log("Data exist in cache");
+                        this._options.logger.info({
+                            step: executionTree.title,
+                            event: Execute.eventsTitle.executionTreeCacheHit,
+                            ...this._options.context
+                        });
 
                         // update statistics
                         executionTree.statistics.cache.hitsNo++;
@@ -550,7 +508,11 @@ class Execute {
 
                         return data;
                     } else {
-                        console.log("Data is not exist in cache");
+                        this._options.logger.info({
+                            step: executionTree.title,
+                            event: Execute.eventsTitle.executionTreeCacheMiss,
+                            ...this._options.context
+                        });
 
                         // update statistics
                         executionTree.statistics.cache.missesNo++;
@@ -559,7 +521,13 @@ class Execute {
                         return this.executeExecutionTreeWithRetry(executionTree, executionData).then((data) => {
                             return this._options.cache.set(cacheKey, data, executionTree.cache.ttl)
                                 .then((set_result) => {
-                                    console.log("Set Data in Cache result:", set_result);
+                                    this._options.logger.info({
+                                        step: executionTree.title,
+                                        event: Execute.eventsTitle.executionTreeCacheSet,
+                                        setResult: set_result,
+                                        ...this._options.context
+                                    });
+
                                     executionTree.statistics.cache.missesTotal += (new Date() - startTime);
                                     return data;
                                 });
@@ -577,6 +545,13 @@ class Execute {
                 return Promise.resolve(executionTree.errorHandling.onError(e ,executionData, this._options))
                     .then( (data)=> {
                         if (executionTree.errorHandling.continueOnError) {
+
+                            this._options.logger.warn({
+                                step: executionTree.title,
+                                event: Execute.eventsTitle.executionTreeContinueOnError,
+                                ...this._options.context
+                            });
+
                             return {
                                 result: data,
                                 signal: Execute.executionMode.CONTINUE
@@ -591,6 +566,30 @@ class Execute {
 }
 
 // Because static keyword works only for method
+Execute.eventsTitle = {
+    testResult: "Test Result",
+
+    actionRetry: "Retry Step's Action",
+    actionFailed: "Step's Action Failed",
+    continueOnError: "Step's Action Failed, Continue Executing",
+
+    executionTreeActionRetry: "Retry Executing Execution Tree",
+    executionTreeActionFailed: "Executing Execution Tree Failed",
+    executionTreeContinueOnError: "Executing Execution Tree Failed, Continue Executing",
+
+    cacheHit: "Step's Cache Hit, Data Exist in Cache",
+    cacheMiss: "Step's Cache Miss, Data doesn't Exist in Cache",
+    cacheSet: "Step's Cache Set, Data Inserted to Cache",
+
+    executionTreeCacheHit: "Step's Cache Hit, Data Exist in Cache",
+    executionTreeCacheMiss: "Step's Cache Miss, Data doesn't Exist in Cache",
+    executionTreeCacheSet: "Step's Cache Set, Data Inserted to Cache",
+
+    stepStartProcessing: "Start Processing Step",
+    childFinished: "Child Execution Tree Returned Data",
+    stepFinished: "Step Execution Finished"
+};
+
 Execute.executionMode = {
     CONTINUE: 0,
     STOP_LEVEL_EXECUTION: 1,
@@ -599,6 +598,7 @@ Execute.executionMode = {
 
 Execute.builtinActionType = {
     DEFAULT: "default",
+    PROMISE: "promise",
     MAP: "map",
     CHILD_EXECUTION_TREE: "execution-tree"
 };
