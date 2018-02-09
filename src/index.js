@@ -289,7 +289,7 @@ class Execute {
 
                 return this._options.cache.get(cacheKey)
                     .then((data) => {
-                        if (data !== undefined) {
+                        if (data !== undefined && data !== null) {
                             // update statistics
                             this._options.logger.info({
                                 step: step.title,
@@ -519,7 +519,7 @@ class Execute {
 
                 return this._options.cache.get(cacheKey)
                     .then((data) => {
-                        if (data !== undefined) {
+                        if (data !== undefined && data !== null) {
                             this._options.logger.info({
                                 step: executionTree.title,
                                 event: Execute.eventsTitle.executionTreeCacheHit,
