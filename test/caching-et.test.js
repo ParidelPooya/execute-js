@@ -41,6 +41,11 @@ lab.experiment("Caching Execution Tree Test", () => {
 
         return execute.run(executionTree, executionData).then( ()=> {
 
+            let stat = Execute.extractStatistics(executionTree);
+
+            lab.expect(stat.statistics.cache.missesNo).to.equal(1);
+            lab.expect(stat.statistics.cache.hitsNo).to.equal(0);
+
             executionTree = Execute.prepareExecutionTree({
                 concurrency: 1,
                 cache: cacheOptions,
@@ -54,6 +59,12 @@ lab.experiment("Caching Execution Tree Test", () => {
 
             return execute.run(executionTree, executionData).then( (result)=> {
                 lab.expect(result.a).to.equal(1);
+
+                let stat = Execute.extractStatistics(executionTree);
+
+                lab.expect(stat.statistics.cache.missesNo).to.equal(0);
+                lab.expect(stat.statistics.cache.hitsNo).to.equal(1);
+
             });
 
         });

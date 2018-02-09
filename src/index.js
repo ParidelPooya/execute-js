@@ -566,7 +566,15 @@ class Execute {
     }
 
     executeExecutionTree(executionTree, executionData) {
+
+        let startTime = new Date();
+
         return this.executeExecutionTreeWithCache(executionTree, executionData)
+            .then((result) => {
+                let processTime = (new Date() - startTime);
+                this.recordStatistics(executionTree, processTime);
+                return result;
+            })
             .catch((e) => {
                 return Promise.resolve(executionTree.errorHandling.onError(e ,executionData, this._options))
                     .then( (data)=> {
