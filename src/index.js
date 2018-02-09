@@ -100,7 +100,9 @@ class Execute {
             _executionTree = executionTree;
         }
 
-        _executionTree = Utility.spreadify(true)(Execute.executionTreeDefaultSetting, _executionTree);
+        _executionTree = Utility.spreadify(true)(
+            Utility.clone(Execute.executionTreeDefaultSetting),
+            _executionTree);
 
         _executionTree.steps.forEach((step, ipos) => {
             _executionTree.steps[ipos] = Execute.prepareExecutionTreeStep(step);
@@ -129,8 +131,24 @@ class Execute {
 
     static extractStatistics(executionTree){
         let data = {
+            title: executionTree.title,
             steps:[]
         };
+
+        data.statistics = executionTree.statistics;
+        if (data.statistics.count !== 0) {
+            data.statistics.avg = data.statistics.total / data.statistics.count;
+        }
+
+        if (data.statistics.cache.missesNo !== 0) {
+            data.statistics.cache.missesAvg =
+                data.statistics.cache.missesTotal / data.statistics.cache.missesNo;
+        }
+
+        if (data.statistics.cache.hitsNo !== 0) {
+            data.statistics.cache.hitsAvg =
+                data.statistics.cache.hitsTotal / data.statistics.cache.hitsNo;
+        }
 
         executionTree.steps.forEach((step, ipos) => {
             data.steps.push({});
@@ -265,52 +283,55 @@ class Execute {
         if (step.cache.enable) {
 
             let cacheKey = step.cache.key(executionData);
-            let startTime = new Date();
 
-            return this._options.cache.get(cacheKey)
-                .then((data) => {
-                    if (data !== undefined) {
-                        // update statistics
-                        this._options.logger.info({
-                            step: step.title,
-                            event: Execute.eventsTitle.cacheHit,
-                            ...this._options.context
-                        });
+            if (cacheKey !== undefined && cacheKey !== "") {
+                let startTime = new Date();
 
-                        step.statistics.cache.hitsNo++;
+                return this._options.cache.get(cacheKey)
+                    .then((data) => {
+                        if (data !== undefined) {
+                            // update statistics
+                            this._options.logger.info({
+                                step: step.title,
+                                event: Execute.eventsTitle.cacheHit,
+                                ...this._options.context
+                            });
 
-                        step.statistics.cache.hitsTotal += (new Date() - startTime);
-                        return data;
-                    } else {
-                        this._options.logger.info({
-                            step: step.title,
-                            event: Execute.eventsTitle.cacheMiss,
-                            ...this._options.context
-                        });
+                            step.statistics.cache.hitsNo++;
 
-                        // update statistics
-                        step.statistics.cache.missesNo++;
-                        startTime = new Date();
+                            step.statistics.cache.hitsTotal += (new Date() - startTime);
+                            return data;
+                        } else {
+                            this._options.logger.info({
+                                step: step.title,
+                                event: Execute.eventsTitle.cacheMiss,
+                                ...this._options.context
+                            });
 
-                        return this.executeStepActionWithRetry(step, executionData).then((data) => {
-                            return this._options.cache.set(cacheKey, data, step.cache.ttl)
-                                .then((set_result) => {
-                                    this._options.logger.info({
-                                        step: step.title,
-                                        event: Execute.eventsTitle.cacheSet,
-                                        setResult: set_result,
-                                        ...this._options.context
+                            // update statistics
+                            step.statistics.cache.missesNo++;
+                            startTime = new Date();
+
+                            return this.executeStepActionWithRetry(step, executionData).then((data) => {
+                                return this._options.cache.set(cacheKey, data, step.cache.ttl)
+                                    .then((set_result) => {
+                                        this._options.logger.info({
+                                            step: step.title,
+                                            event: Execute.eventsTitle.cacheSet,
+                                            setResult: set_result,
+                                            ...this._options.context
+                                        });
+
+                                        step.statistics.cache.missesTotal += (new Date() - startTime);
+                                        return data;
                                     });
-
-                                    step.statistics.cache.missesTotal += (new Date() - startTime);
-                                    return data;
-                                });
-                        });
-                    }
-                });
-        } else {
-            return this.executeStepActionWithRetry(step, executionData);
+                            });
+                        }
+                    });
+            }
         }
+
+        return this.executeStepActionWithRetry(step, executionData);
     }
 
     executeStepActionAndHandleError(step, executionData) {
@@ -491,52 +512,57 @@ class Execute {
         if (executionTree.cache.enable) {
 
             let cacheKey = executionTree.cache.key(executionData);
-            let startTime = new Date();
 
-            return this._options.cache.get(cacheKey)
-                .then((data) => {
-                    if (data !== undefined) {
-                        this._options.logger.info({
-                            step: executionTree.title,
-                            event: Execute.eventsTitle.executionTreeCacheHit,
-                            ...this._options.context
-                        });
+            if (cacheKey !== undefined && cacheKey !== "") {
 
-                        // update statistics
-                        executionTree.statistics.cache.hitsNo++;
-                        executionTree.statistics.cache.hitsTotal += (new Date() - startTime);
+                let startTime = new Date();
 
-                        return data;
-                    } else {
-                        this._options.logger.info({
-                            step: executionTree.title,
-                            event: Execute.eventsTitle.executionTreeCacheMiss,
-                            ...this._options.context
-                        });
+                return this._options.cache.get(cacheKey)
+                    .then((data) => {
+                        if (data !== undefined) {
+                            this._options.logger.info({
+                                step: executionTree.title,
+                                event: Execute.eventsTitle.executionTreeCacheHit,
+                                ...this._options.context
+                            });
 
-                        // update statistics
-                        executionTree.statistics.cache.missesNo++;
-                        startTime = new Date();
+                            // update statistics
+                            executionTree.statistics.cache.hitsNo++;
+                            executionTree.statistics.cache.hitsTotal += (new Date() - startTime);
 
-                        return this.executeExecutionTreeWithRetry(executionTree, executionData).then((data) => {
-                            return this._options.cache.set(cacheKey, data, executionTree.cache.ttl)
-                                .then((set_result) => {
-                                    this._options.logger.info({
-                                        step: executionTree.title,
-                                        event: Execute.eventsTitle.executionTreeCacheSet,
-                                        setResult: set_result,
-                                        ...this._options.context
+                            return data;
+                        } else {
+                            this._options.logger.info({
+                                step: executionTree.title,
+                                event: Execute.eventsTitle.executionTreeCacheMiss,
+                                ...this._options.context
+                            });
+
+                            // update statistics
+                            executionTree.statistics.cache.missesNo++;
+                            startTime = new Date();
+
+                            return this.executeExecutionTreeWithRetry(executionTree, executionData).then((data) => {
+                                return this._options.cache.set(cacheKey, data, executionTree.cache.ttl)
+                                    .then((set_result) => {
+                                        this._options.logger.info({
+                                            step: executionTree.title,
+                                            event: Execute.eventsTitle.executionTreeCacheSet,
+                                            setResult: set_result,
+                                            ...this._options.context
+                                        });
+
+                                        executionTree.statistics.cache.missesTotal += (new Date() - startTime);
+                                        return data;
                                     });
-
-                                    executionTree.statistics.cache.missesTotal += (new Date() - startTime);
-                                    return data;
-                                });
-                        });
-                    }
-                });
-        } else {
-            return this.executeExecutionTreeWithRetry(executionTree, executionData);
+                            });
+                        }
+                    });
+            }
         }
+
+        return this.executeExecutionTreeWithRetry(executionTree, executionData);
+
     }
 
     executeExecutionTree(executionTree, executionData) {

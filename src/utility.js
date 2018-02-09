@@ -6,7 +6,12 @@ const getByPath = (obj, key) => {
     let keys = key.split(".");
 
     for (let i = 0; i < keys.length; i++) {
+
         obj = obj[keys[i]];
+
+        if (obj === undefined) {
+            return undefined;
+        }
     }
 
     return obj;
