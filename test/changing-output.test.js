@@ -18,6 +18,38 @@ lab.experiment("Changing Output Tests", () => {
                         addToResult: true,
                         accessibleToNextSteps: true,
                         map: {
+                            source: "from.b.b",
+                            destination: "differentNode.subnode"
+                        }
+                    }
+                }
+            ]
+        });
+
+        let executionData = {
+            sub_id :123
+        };
+
+        return execute.run(executionTree, executionData).then( (result)=> {
+            lab.expect(result.differentNode.subnode).to.be.undefined();
+
+        });
+    });
+
+
+    lab.test("result of steps should overwrite eachother", () => {
+        let execute = new Execute();
+
+        let executionTree = Execute.prepareExecutionTree({
+            concurrency: 1,
+            steps :[
+                {
+                    title:"step 1",
+                    action: (data) => {return {from: {a: 1}} ;},
+                    output: {
+                        addToResult: true,
+                        accessibleToNextSteps: true,
+                        map: {
                             source: "from",
                             destination: "differentNode.subnode"
                         }

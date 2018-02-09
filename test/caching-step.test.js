@@ -138,4 +138,74 @@ lab.experiment("Caching Step Test", () => {
         });
     });
 
+    lab.test("if key is undefined it should ignore cache", () => {
+        let execute = new Execute();
+
+        const func = (data)=> {
+            return new Promise((resolve) => {
+
+                setTimeout(()=> {
+                    console.log(data);
+                    resolve(data);
+                }, 0);
+            });
+        };
+
+
+        const cacheOptions = {
+            enable: true,
+            ttl: 60,
+            key: (data) => undefined
+        };
+
+        let executionTree = Execute.prepareExecutionTree({
+            concurrency: 1,
+            steps :[
+                {
+                    cache: cacheOptions,
+                    title:"step 1",
+                    action: (data) => func({a: 1})
+                },
+                {
+                    cache: cacheOptions,
+                    title:"step 2",
+                    action: (data) => func({b: 2})
+                },
+                {
+                    cache: cacheOptions,
+                    title:"step 3",
+                    action: (data) => func({c: 3})
+                },
+                {
+                    cache: cacheOptions,
+                    title:"step 4",
+                    action: (data) => func({d: 4})
+                },
+                {
+                    cache: cacheOptions,
+                    title:"step 5",
+                    action: (data) => func({e: 5})
+                }
+            ]
+        });
+
+
+
+        let executionData = {
+            sub_id :123
+        };
+
+        return execute.run(executionTree, executionData).then( (result)=> {
+            lab.expect(result.a).to.equal(1);
+
+            let stat = Execute.extractStatistics(executionTree);
+            let cacheCount =
+                stat.steps[0].statistics.cache.missesNo +
+                stat.steps[0].statistics.cache.hitsNo;
+
+            lab.expect(cacheCount).to.equal(0);
+
+        });
+    });
+
 });
