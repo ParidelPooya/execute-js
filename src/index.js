@@ -279,6 +279,50 @@ class Execute {
 
     }
 
+    executeStepActionWithCircuitBreaker(step, executionData) {
+        if (!step.circuitBreaker.enable) {
+            // Circuit Breaker is disabled, ignore Circuit Breaker
+            return this.executeStepActionWithRetry(step, executionData);
+        }
+
+        let cb = step.circuitBreaker;
+
+        if (cb.shortCircuited) {
+            // check wait threshold is over or not
+            if ((new Date()) - cb.shortCircuitStartTime > cb.duration) {
+                // turn off Short Circuited mode
+                cb.shortCircuited = false;
+                cb.failed = 0;
+                cb.successful = 0;
+            }
+        }
+
+        if (cb.shortCircuited) {
+            return Promise.reject("Short Circuited");
+        }
+
+        return this.executeStepActionWithRetry(step, executionData)
+            .then((data) => {
+                cb.successful++;
+
+                return data;
+            })
+            .catch((error) => {
+                cb.failed++;
+
+                let total = cb.successful + cb.failed;
+
+                if (total > cb.waitThreshold && cb.failed / total > cb.threshold) {
+                    // go to Short Circuited mode
+                    cb.shortCircuited = true;
+                    cb.shortCircuitStartTime = new Date();
+                    cb.shortCircuitCount++;
+                }
+
+                return Promise.reject(error);
+            });
+    }
+
     executeStepActionWithCache(step, executionData) {
         if (step.cache.enable) {
 
@@ -312,7 +356,7 @@ class Execute {
                             step.statistics.cache.missesNo++;
                             startTime = new Date();
 
-                            return this.executeStepActionWithRetry(step, executionData).then((data) => {
+                            return this.executeStepActionWithCircuitBreaker(step, executionData).then((data) => {
                                 return this._options.cache.set(cacheKey, data, step.cache.ttl)
                                     .then((set_result) => {
                                         this._options.logger.info({
@@ -331,7 +375,7 @@ class Execute {
             }
         }
 
-        return this.executeStepActionWithRetry(step, executionData);
+        return this.executeStepActionWithCircuitBreaker(step, executionData);
     }
 
     executeStepActionAndHandleError(step, executionData) {
@@ -673,7 +717,18 @@ Execute.stepDefaultSetting = {
         maxAttempts: 0,
         tryCondition: () => true,
         continueOnError: false,
-        onError: () => ({})
+        onError: () => ({}),
+    },
+    circuitBreaker: {
+        enable: false,
+        duration: 10000,
+        threshold: 0.4,
+        waitThreshold: 50,
+        shortCircuitStartTime: 0,
+        shortCircuited: false,
+        shortCircuitCount: 0,
+        failed: 0,
+        successful: 0
     },
     cache: {
         enable: false,
