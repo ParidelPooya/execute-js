@@ -21,11 +21,17 @@ class Execute {
     }
 
     static defaultAction(action, executionData, options) {
-        return Promise.resolve(action(executionData, options));
+        return Promise.resolve(action(executionData, options))
+            .then((data) => {
+                return {result: data, signal: Execute.executionMode.CONTINUE};
+            });
     }
 
     static promiseAction(action, executionData, options) {
-        return action(executionData, options);
+        return action(executionData, options)
+            .then((data) => {
+                return {result: data, signal: Execute.executionMode.CONTINUE};
+            });
     }
 
     static childExecutionTreeHandler(action, executionData) {
@@ -37,8 +43,7 @@ class Execute {
 
         let data = action.executionData ? action.executionData(executionData) : executionData;
 
-        return this.executeExecutionTree(action.executionTree, data)
-            .then((response) => response.result);
+        return this.executeExecutionTree(action.executionTree, data);
 
     }
 
@@ -56,9 +61,10 @@ class Execute {
             }
          */
         let final = [];
+        let process;
 
         if (action.reducer !== undefined) {
-            return action.array(executionData).reduce((promise, item) => promise
+            process = action.array(executionData).reduce((promise, item) => promise
                 .then(() => {
                     return Promise
                         .resolve(action.reducer(item, options))
@@ -71,7 +77,7 @@ class Execute {
                 , Promise.resolve()
             );
         } else {
-            return action.array(executionData).reduce((promise, item) => promise
+            process =  action.array(executionData).reduce((promise, item) => promise
                 .then(() => {
                     let data = action.executionData ? action.executionData(executionData, item) : item;
 
@@ -81,10 +87,13 @@ class Execute {
                             return final;
                         });
                 })
-                .catch(console.error)
                 , Promise.resolve()
             );
         }
+
+        return process.then((data) => {
+            return {result: data, signal: Execute.executionMode.CONTINUE};
+        });
     }
 
     static prepareExecutionTree(executionTree) {
@@ -279,6 +288,50 @@ class Execute {
 
     }
 
+    executeStepActionWithCircuitBreaker(step, executionData) {
+        if (!step.circuitBreaker.enable) {
+            // Circuit Breaker is disabled, ignore Circuit Breaker
+            return this.executeStepActionWithRetry(step, executionData);
+        }
+
+        let cb = step.circuitBreaker;
+
+        if (cb.shortCircuited) {
+            // check wait threshold is over or not
+            if ((new Date()) - cb.shortCircuitStartTime > cb.duration) {
+                // turn off Short Circuited mode
+                cb.shortCircuited = false;
+                cb.failed = 0;
+                cb.successful = 0;
+            }
+        }
+
+        if (cb.shortCircuited) {
+            return Promise.reject("Short Circuited");
+        }
+
+        return this.executeStepActionWithRetry(step, executionData)
+            .then((data) => {
+                cb.successful++;
+
+                return data;
+            })
+            .catch((error) => {
+                cb.failed++;
+
+                let total = cb.successful + cb.failed;
+
+                if (total > cb.waitThreshold && cb.failed / total > cb.threshold) {
+                    // go to Short Circuited mode
+                    cb.shortCircuited = true;
+                    cb.shortCircuitStartTime = new Date();
+                    cb.shortCircuitCount++;
+                }
+
+                return Promise.reject(error);
+            });
+    }
+
     executeStepActionWithCache(step, executionData) {
         if (step.cache.enable) {
 
@@ -312,7 +365,7 @@ class Execute {
                             step.statistics.cache.missesNo++;
                             startTime = new Date();
 
-                            return this.executeStepActionWithRetry(step, executionData).then((data) => {
+                            return this.executeStepActionWithCircuitBreaker(step, executionData).then((data) => {
                                 return this._options.cache.set(cacheKey, data, step.cache.ttl)
                                     .then((set_result) => {
                                         this._options.logger.info({
@@ -331,7 +384,7 @@ class Execute {
             }
         }
 
-        return this.executeStepActionWithRetry(step, executionData);
+        return this.executeStepActionWithCircuitBreaker(step, executionData);
     }
 
     executeStepActionAndHandleError(step, executionData) {
@@ -347,7 +400,7 @@ class Execute {
                                 ...this._options.context
                             });
 
-                            return data;
+                            return {result:data, signal: Execute.executionMode.CONTINUE};
                         } else {
                             this._options.logger.error({
                                 step: step.title,
@@ -391,9 +444,9 @@ class Execute {
             // Only executing action when there is no test.
             // By this we can improve performance because we don't need to
             // combine the result of action and test
-            return this.executeStepActionAndHandleError(step, executionData).then((result) => {
+            return this.executeStepActionAndHandleError(step, executionData).then((data) => {
 
-                let _result = Utility.getByPath(result, step.output.map.source);
+                data.result = Utility.getByPath(data.result, step.output.map.source);
 
                 this._options.logger.info({
                     step: step.title,
@@ -401,7 +454,7 @@ class Execute {
                     ...this._options.context
                 });
 
-                return {result: _result, signal: Execute.executionMode.CONTINUE};
+                return data;
             });
         }
     }
@@ -673,7 +726,18 @@ Execute.stepDefaultSetting = {
         maxAttempts: 0,
         tryCondition: () => true,
         continueOnError: false,
-        onError: () => ({})
+        onError: () => ({}),
+    },
+    circuitBreaker: {
+        enable: false,
+        duration: 10000,
+        threshold: 0.4,
+        waitThreshold: 50,
+        shortCircuitStartTime: 0,
+        shortCircuited: false,
+        shortCircuitCount: 0,
+        failed: 0,
+        successful: 0
     },
     cache: {
         enable: false,
