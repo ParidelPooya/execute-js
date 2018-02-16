@@ -21,11 +21,17 @@ class Execute {
     }
 
     static defaultAction(action, executionData, options) {
-        return Promise.resolve(action(executionData, options));
+        return Promise.resolve(action(executionData, options))
+            .then((data) => {
+                return {result: data, signal: Execute.executionMode.CONTINUE};
+            });
     }
 
     static promiseAction(action, executionData, options) {
-        return action(executionData, options);
+        return action(executionData, options)
+            .then((data) => {
+                return {result: data, signal: Execute.executionMode.CONTINUE};
+            });
     }
 
     static childExecutionTreeHandler(action, executionData) {
@@ -37,8 +43,7 @@ class Execute {
 
         let data = action.executionData ? action.executionData(executionData) : executionData;
 
-        return this.executeExecutionTree(action.executionTree, data)
-            .then((response) => response.result);
+        return this.executeExecutionTree(action.executionTree, data);
 
     }
 
@@ -56,9 +61,10 @@ class Execute {
             }
          */
         let final = [];
+        let process;
 
         if (action.reducer !== undefined) {
-            return action.array(executionData).reduce((promise, item) => promise
+            process = action.array(executionData).reduce((promise, item) => promise
                 .then(() => {
                     return Promise
                         .resolve(action.reducer(item, options))
@@ -71,7 +77,7 @@ class Execute {
                 , Promise.resolve()
             );
         } else {
-            return action.array(executionData).reduce((promise, item) => promise
+            process =  action.array(executionData).reduce((promise, item) => promise
                 .then(() => {
                     let data = action.executionData ? action.executionData(executionData, item) : item;
 
@@ -81,10 +87,13 @@ class Execute {
                             return final;
                         });
                 })
-                .catch(console.error)
                 , Promise.resolve()
             );
         }
+
+        return process.then((data) => {
+            return {result: data, signal: Execute.executionMode.CONTINUE};
+        });
     }
 
     static prepareExecutionTree(executionTree) {
@@ -391,7 +400,7 @@ class Execute {
                                 ...this._options.context
                             });
 
-                            return data;
+                            return {result:data, signal: Execute.executionMode.CONTINUE};
                         } else {
                             this._options.logger.error({
                                 step: step.title,
@@ -435,9 +444,9 @@ class Execute {
             // Only executing action when there is no test.
             // By this we can improve performance because we don't need to
             // combine the result of action and test
-            return this.executeStepActionAndHandleError(step, executionData).then((result) => {
+            return this.executeStepActionAndHandleError(step, executionData).then((data) => {
 
-                let _result = Utility.getByPath(result, step.output.map.source);
+                data.result = Utility.getByPath(data.result, step.output.map.source);
 
                 this._options.logger.info({
                     step: step.title,
@@ -445,7 +454,7 @@ class Execute {
                     ...this._options.context
                 });
 
-                return {result: _result, signal: Execute.executionMode.CONTINUE};
+                return data;
             });
         }
     }
