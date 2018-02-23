@@ -266,7 +266,7 @@ class Execute {
                     this._options.logger.warn({
                         step: step.title,
                         event: Execute.eventsTitle.actionRetry,
-                        cause: err.message,
+                        cause: err,
                         ...this._options.context
                     });
 
@@ -275,7 +275,7 @@ class Execute {
                     this._options.logger.error({
                         step: step.title,
                         event: Execute.eventsTitle.actionFailed,
-                        cause: err.message,
+                        cause: err,
                         ...this._options.context
                     });
 
@@ -405,7 +405,7 @@ class Execute {
                             this._options.logger.error({
                                 step: step.title,
                                 event: Execute.eventsTitle.actionFailed,
-                                cause: e.message,
+                                cause: e,
                                 ...this._options.context
                             });
 
@@ -451,6 +451,7 @@ class Execute {
                 this._options.logger.info({
                     step: step.title,
                     event: Execute.eventsTitle.stepFinished,
+                    result: data.result,
                     ...this._options.context
                 });
 
@@ -541,7 +542,7 @@ class Execute {
                         this._options.logger.warn({
                             step: executionTree.title,
                             event: Execute.eventsTitle.executionTreeActionRetry,
-                            cause: err.message,
+                            cause: err,
                             ...this._options.context
                         });
 
@@ -550,7 +551,7 @@ class Execute {
                         this._options.logger.error({
                             step: executionTree.title,
                             event: Execute.eventsTitle.executionTreeActionFailed,
-                            cause: err.message,
+                            cause: err,
                             ...this._options.context
                         });
 
