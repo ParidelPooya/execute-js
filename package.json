@@ -1,6 +1,6 @@
 {
   "name": "execute-js",
-  "version": "0.21.0",
+  "version": "0.21.1",
   "description": "Application workflow executor for JavaScript",
   "main": "lib/execute-js.min.js",
   "scripts": {
