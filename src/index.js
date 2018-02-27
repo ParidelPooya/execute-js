@@ -578,6 +578,7 @@ class Execute {
                             this._options.logger.info({
                                 step: executionTree.title,
                                 event: Execute.eventsTitle.executionTreeCacheHit,
+                                result: data,
                                 ...this._options.context
                             });
 
