@@ -347,6 +347,7 @@ class Execute {
                             this._options.logger.info({
                                 step: step.title,
                                 event: Execute.eventsTitle.cacheHit,
+                                result: data,
                                 ...this._options.context
                             });
 
@@ -669,9 +670,9 @@ Execute.eventsTitle = {
     cacheMiss: "Step's Cache Miss, Data doesn't Exist in Cache",
     cacheSet: "Step's Cache Set, Data Inserted to Cache",
 
-    executionTreeCacheHit: "Step's Cache Hit, Data Exist in Cache",
-    executionTreeCacheMiss: "Step's Cache Miss, Data doesn't Exist in Cache",
-    executionTreeCacheSet: "Step's Cache Set, Data Inserted to Cache",
+    executionTreeCacheHit: "Execution Tree's Cache Hit, Data Exist in Cache",
+    executionTreeCacheMiss: "Execution Tree's Cache Miss, Data doesn't Exist in Cache",
+    executionTreeCacheSet: "Execution Tree's Cache Set, Data Inserted to Cache",
 
     stepStartProcessing: "Start Processing Step",
     childFinished: "Child Execution Tree Returned Data",
