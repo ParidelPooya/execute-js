@@ -12,12 +12,12 @@ class Execute {
         // check if we have actions
         if (Execute._actions === undefined) {
             Execute._actions = {};
-            Execute._actions[Execute.builtinActionType.DEFAULT] =  Execute.defaultAction;
-            Execute._actions[Execute.builtinActionType.PROMISE] =  Execute.promiseAction;
-
-            Execute._actions[Execute.builtinActionType.MAP] = Execute.mapActionHandler;
-            Execute._actions[Execute.builtinActionType.CHILD_EXECUTION_TREE] = Execute.childExecutionTreeHandler;
         }
+        Execute._actions[Execute.builtinActionType.DEFAULT] =  Execute.defaultAction;
+        Execute._actions[Execute.builtinActionType.PROMISE] =  Execute.promiseAction;
+
+        Execute._actions[Execute.builtinActionType.MAP] = Execute.mapActionHandler;
+        Execute._actions[Execute.builtinActionType.CHILD_EXECUTION_TREE] = Execute.childExecutionTreeHandler;
 
         this._options = Utility.spreadify()(defaultOption, options || {});
     }
