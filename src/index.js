@@ -9,13 +9,15 @@ class Execute {
             cache: require("./tiny-cache")
         };
 
-        // Add all action handlers
-        this._actions = {};
-        this._actions[Execute.builtinActionType.DEFAULT] =  Execute.defaultAction.bind(this);
-        this._actions[Execute.builtinActionType.PROMISE] =  Execute.promiseAction.bind(this);
+        // check if we have actions
+        if (Execute._actions === undefined) {
+            Execute._actions = {};
+            Execute._actions[Execute.builtinActionType.DEFAULT] =  Execute.defaultAction;
+            Execute._actions[Execute.builtinActionType.PROMISE] =  Execute.promiseAction;
 
-        this._actions[Execute.builtinActionType.MAP] = Execute.mapActionHandler.bind(this);
-        this._actions[Execute.builtinActionType.CHILD_EXECUTION_TREE] = Execute.childExecutionTreeHandler.bind(this);
+            Execute._actions[Execute.builtinActionType.MAP] = Execute.mapActionHandler;
+            Execute._actions[Execute.builtinActionType.CHILD_EXECUTION_TREE] = Execute.childExecutionTreeHandler;
+        }
 
         this._options = Utility.spreadify()(defaultOption, options || {});
     }
@@ -194,20 +196,20 @@ class Execute {
         return Utility.clone(data);
     }
 
-    use(middleware) {
+    static use(middleware) {
         if (!middleware.type) {
             throw new Error("type is missing in middleware contract");
         }
 
         switch (middleware.type) {
             case "action":
-                return this.addActionMiddleware(middleware);
+                return Execute.addActionMiddleware(middleware);
             default:
                 throw new Error("Unknown middleware type");
         }
     }
 
-    addActionMiddleware(middleware) {
+    static addActionMiddleware(middleware) {
         if (!middleware.action) {
             throw new Error("Middleware action is missing");
         }
@@ -216,7 +218,11 @@ class Execute {
             throw new Error("Middleware name is missing");
         }
 
-        this._actions[middleware.name] = middleware.action;
+        if (Execute._actions === undefined) {
+            Execute._actions = {};
+        }
+
+        Execute._actions[middleware.name] = middleware.action;
         return true;
     }
 
@@ -256,7 +262,7 @@ class Execute {
     executeStepActionWithRetry(step, executionData) {
 
         let retryPromise = (tries)=> {
-            let action = this._actions[step.actionType](step.action, executionData, this._options);
+            let action = Execute._actions[step.actionType].apply(this, [step.action, executionData, this._options]);
 
             return action.catch( (err) => {
                 // update statistics
