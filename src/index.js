@@ -133,7 +133,8 @@ class Execute {
             });
         }
 
-        if (_step.actionType === Execute.builtinActionType.CHILD_EXECUTION_TREE) {
+        if (_step.actionType === Execute.builtinActionType.CHILD_EXECUTION_TREE ||
+            (_step.actionType === Execute.builtinActionType.MAP && _step.action.executionTree)) {
             _step.action.executionTree = this.prepareExecutionTree(_step.action.executionTree);
         }
 
