@@ -133,8 +133,10 @@ class Execute {
             });
         }
 
-        if (_step.actionType === Execute.builtinActionType.CHILD_EXECUTION_TREE ||
-            (_step.actionType === Execute.builtinActionType.MAP && _step.action.executionTree)) {
+        if (_step.actionType === Execute.builtinActionType.CHILD_EXECUTION_TREE) {
+            _step.action.executionTree = this.prepareExecutionTree(_step.action.executionTree);
+        } else if(_step.actionType === Execute.builtinActionType.MAP && _step.action.executionTree) {
+            // if actionType is MAP and the action is a child execution tree
             _step.action.executionTree = this.prepareExecutionTree(_step.action.executionTree);
         }
 
