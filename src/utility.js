@@ -58,6 +58,10 @@ const spreadify = (deepCopy) => {
 };
 
 const extend = (dest, extendFrom) => {
+    if (typeof(extendFrom) === "string" ) {
+        return extendFrom;
+    }
+
     if (Array.isArray(extendFrom)) {
         if (Array.isArray(dest)) {
             return dest.concat(extendFrom);

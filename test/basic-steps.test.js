@@ -260,4 +260,41 @@ lab.experiment("Basic Steps Test", () => {
         });
     });
 
+
+
+    lab.test("Returning string should work", () => {
+        let execute = new Execute();
+
+        let executionTree = Execute.prepareExecutionTree([
+            {
+                id: "step1",
+                title:"step 1",
+                test: (data) => data.Code === "code1",
+                if: {
+                    true:[
+                        {
+                            id: "step2",
+                            title:"step 2",
+                            action: (data)=> "123456"
+                        }
+                    ],
+                    false:[
+                        {
+                            id: "step3",
+                            title:"step 3",
+                            action: (data)=> {return {b: 3};}
+                        }
+                    ]
+                }
+            }
+        ]);
+
+        let executionData = {
+            Code :"code1"
+        };
+
+        return execute.run(executionTree, executionData).then( (result)=> {
+            lab.expect(result).to.equal("123456");
+        });
+    });
 });
