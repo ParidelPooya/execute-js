@@ -199,6 +199,32 @@ class Execute {
         return Utility.clone(data);
     }
 
+    static getStepById(executionTree, stepId) {
+
+        for (let ipos = 0;ipos < executionTree.steps.length; ipos++) {
+            let step = executionTree.steps[ipos];
+
+            if(step.id === stepId) {
+                return step;
+            }
+
+            if(typeof(step.if) !== "undefined") {
+
+                let childKeys = Object.keys(step.if);
+
+                for (let jpos = 0;jpos < childKeys.length; jpos++) {
+                    let child = step.if[childKeys[jpos]];
+                    let stepObj = Execute.getStepById(child, stepId);
+
+                    if (stepObj !== false) {
+                        return stepObj;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     static use(middleware) {
         if (!middleware.type) {
             throw new Error("type is missing in middleware contract");
