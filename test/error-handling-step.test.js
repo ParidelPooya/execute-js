@@ -43,7 +43,7 @@ lab.experiment("Error Handling Step Test", () => {
         });
     });
 
-    lab.test("should add data from onErrorResponse to result", () => {
+    lab.test("should add data from onError response to result", () => {
         let execute = new Execute();
 
         let executionTree = Execute.prepareExecutionTree([
@@ -61,6 +61,50 @@ lab.experiment("Error Handling Step Test", () => {
                 errorHandling: {
                     continueOnError: true,
                     onError: ()=> {return {b:-1};}
+                }
+            },
+            {
+                title: "step 3",
+                action: (data) => {
+                    return {c: 3};
+                }
+            }
+        ]);
+
+
+        let executionData = {
+            sub_id: 123
+        };
+
+        return execute.run(executionTree, executionData).then((result) => {
+            lab.expect(result.b).to.not.be.undefined();
+            lab.expect(result.a).to.equal(1);
+        });
+    });
+
+    lab.test("should add data from onError execution tree to result", () => {
+        let execute = new Execute();
+
+        let executionTree = Execute.prepareExecutionTree([
+            {
+                title: "step 1",
+                action: (data) => {
+                    return {a: 1};
+                }
+            },
+            {
+                title: "step 2",
+                action: (data) => {
+                    return Promise.reject({name: "error", message: "custom error"});
+                },
+                errorHandling: {
+                    continueOnError: true,
+                    onError: [{
+                        title: "step 'on error'",
+                        action: (data) => {
+                            return {b:-1};
+                        }
+                    }]
                 }
             },
             {
