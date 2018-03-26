@@ -115,6 +115,10 @@ class Execute {
             Utility.clone(Execute.executionTreeDefaultSetting),
             _executionTree);
 
+        if (typeof(_executionTree.errorHandling.onError) !== "function") {
+            _executionTree.errorHandling.onError = Execute.prepareExecutionTree(_executionTree.errorHandling.onError);
+        }
+
         _executionTree.steps.forEach((step, ipos) => {
             _executionTree.steps[ipos] = Execute.prepareExecutionTreeStep(step);
         });
@@ -125,19 +129,23 @@ class Execute {
     static prepareExecutionTreeStep(step) {
         let _step = Utility.spreadify(true)(Utility.clone(Execute.stepDefaultSetting), step);
 
+        if (typeof(_step.errorHandling.onError) !== "function") {
+            _step.errorHandling.onError = Execute.prepareExecutionTree(_step.errorHandling.onError);
+        }
+
         if (typeof(_step.if) !== "undefined") {
             Object.keys(_step.if).forEach((cond) => {
                 if (typeof(_step.if[cond]) === "object") {
-                    _step.if[cond] = this.prepareExecutionTree(_step.if[cond]);
+                    _step.if[cond] = Execute.prepareExecutionTree(_step.if[cond]);
                 }
             });
         }
 
         if (_step.actionType === Execute.builtinActionType.CHILD_EXECUTION_TREE) {
-            _step.action.executionTree = this.prepareExecutionTree(_step.action.executionTree);
+            _step.action.executionTree = Execute.prepareExecutionTree(_step.action.executionTree);
         } else if(_step.actionType === Execute.builtinActionType.MAP && _step.action.executionTree) {
             // if actionType is MAP and the action is a child execution tree
-            _step.action.executionTree = this.prepareExecutionTree(_step.action.executionTree);
+            _step.action.executionTree = Execute.prepareExecutionTree(_step.action.executionTree);
         }
 
         return _step;
@@ -425,29 +433,39 @@ class Execute {
 
     executeStepActionAndHandleError(step, executionData) {
         return this.executeStepActionWithCache(step, executionData)
-            .catch((e) => {
+            .catch((err) => {
 
-                return Promise.resolve(step.errorHandling.onError(e ,executionData, this._options))
-                    .then( (data)=> {
-                        if (step.errorHandling.continueOnError) {
-                            this._options.logger.warn({
-                                step: step.title,
-                                event: Execute.eventsTitle.continueOnError,
-                                ...this._options.context
-                            });
+                let onErrorOp;
 
-                            return {result:data, signal: Execute.executionMode.CONTINUE};
-                        } else {
-                            this._options.logger.error({
-                                step: step.title,
-                                event: Execute.eventsTitle.actionFailed,
-                                cause: e,
-                                ...this._options.context
-                            });
+                if (typeof(step.errorHandling.onError) === "function") {
+                    onErrorOp = Promise.resolve(step.errorHandling.onError(err ,executionData, this._options));
+                } else {
+                    onErrorOp = this.executeExecutionTree(step.errorHandling.onError, {
+                        ...executionData,
+                        error: err
+                    }).then( data => data.result);
+                }
 
-                            return Promise.reject(e);
-                        }
-                    });
+                return onErrorOp.then( (data)=> {
+                    if (step.errorHandling.continueOnError) {
+                        this._options.logger.warn({
+                            step: step.title,
+                            event: Execute.eventsTitle.continueOnError,
+                            ...this._options.context
+                        });
+
+                        return {result:data, signal: Execute.executionMode.CONTINUE};
+                    } else {
+                        this._options.logger.error({
+                            step: step.title,
+                            event: Execute.eventsTitle.actionFailed,
+                            cause: err,
+                            ...this._options.context
+                        });
+
+                        return Promise.reject(err);
+                    }
+                });
 
             });
     }
@@ -666,25 +684,35 @@ class Execute {
                 this.recordStatistics(executionTree, processTime);
                 return result;
             })
-            .catch((e) => {
-                return Promise.resolve(executionTree.errorHandling.onError(e ,executionData, this._options))
-                    .then( (data)=> {
-                        if (executionTree.errorHandling.continueOnError) {
+            .catch((err) => {
+                let onErrorOp;
 
-                            this._options.logger.warn({
-                                step: executionTree.title,
-                                event: Execute.eventsTitle.executionTreeContinueOnError,
-                                ...this._options.context
-                            });
+                if (typeof(executionTree.errorHandling.onError) === "function") {
+                    onErrorOp = Promise.resolve(executionTree.errorHandling.onError(err ,executionData, this._options));
+                } else {
+                    onErrorOp = this.executeExecutionTree(executionTree.errorHandling.onError, {
+                        ...executionData,
+                        error: err
+                    }).then( data => data.result);
+                }
 
-                            return {
-                                result: data,
-                                signal: Execute.executionMode.CONTINUE
-                            };
-                        } else {
-                            return Promise.reject(e);
-                        }
-                    });
+                return onErrorOp.then( (data)=> {
+                    if (executionTree.errorHandling.continueOnError) {
+
+                        this._options.logger.warn({
+                            step: executionTree.title,
+                            event: Execute.eventsTitle.executionTreeContinueOnError,
+                            ...this._options.context
+                        });
+
+                        return {
+                            result: data,
+                            signal: Execute.executionMode.CONTINUE
+                        };
+                    } else {
+                        return Promise.reject(err);
+                    }
+                });
             });
     }
 
