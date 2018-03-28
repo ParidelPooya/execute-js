@@ -268,7 +268,7 @@ class Execute {
             .then((response) => response.result);
     }
 
-    goToNextStep(step, executionData) {
+    nextStep(step, executionData) {
         const testResult = typeof step.test === "function"
             ? step.test(executionData, this._options) // call the test with the results from the action
             : step.test;
@@ -281,7 +281,12 @@ class Execute {
         });
 
         // get a reference to the next step based on the test result
-        const nextStep = typeof(step.if[testResult]) !=="undefined" ? step.if[testResult] : step.if.default;
+        return typeof(step.if[testResult]) !=="undefined" ? step.if[testResult] : step.if.default;
+
+    }
+
+    goToNextStep(step, executionData) {
+        const nextStep = this.nextStep(step, executionData);
 
         if (nextStep === undefined) {
             // TODO: better handeling if the next step is missing.
