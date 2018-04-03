@@ -268,10 +268,16 @@ class Execute {
             .then((response) => response.result);
     }
 
-    nextStep(step, executionData) {
+    nextStepKey(step, executionData) {
         const testResult = typeof step.test === "function"
             ? step.test(executionData, this._options) // call the test with the results from the action
             : step.test;
+
+        return testResult;
+    }
+
+    nextStep(step, executionData) {
+        const testResult = this.nextStepKey(step, executionData);
 
         this._options.logger.info({
             step: step.title,
