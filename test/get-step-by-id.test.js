@@ -49,6 +49,7 @@ lab.experiment("Get Step By Id Test", () => {
                 title:"step 3",
                 test: (data) => data.code === "code1",
                 if: {
+                    continue: Execute.executionMode.CONTINUE,
                     true:[
                         {
                             id: "step3_1",

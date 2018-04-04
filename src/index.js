@@ -222,6 +222,11 @@ class Execute {
 
                 for (let jpos = 0;jpos < childKeys.length; jpos++) {
                     let child = step.if[childKeys[jpos]];
+
+                    if (typeof child === "number") {
+                        continue;
+                    }
+
                     let stepObj = Execute.getStepById(child, stepId);
 
                     if (stepObj !== false) {
