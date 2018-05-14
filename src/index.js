@@ -466,6 +466,7 @@ class Execute {
                     if (step.errorHandling.continueOnError) {
                         this._options.logger.warn({
                             step: step.title,
+                            cause: err,
                             event: Execute.eventsTitle.continueOnError,
                             ...this._options.context
                         });
@@ -717,6 +718,7 @@ class Execute {
 
                         this._options.logger.warn({
                             step: executionTree.title,
+                            cause: err,
                             event: Execute.eventsTitle.executionTreeContinueOnError,
                             ...this._options.context
                         });
@@ -726,6 +728,13 @@ class Execute {
                             signal: Execute.executionMode.CONTINUE
                         };
                     } else {
+                        this._options.logger.error({
+                            step: executionTree.title,
+                            event: Execute.eventsTitle.executionTreeActionFailed,
+                            cause: err,
+                            ...this._options.context
+                        });
+
                         return Promise.reject(err);
                     }
                 });

@@ -126,4 +126,45 @@ lab.experiment("Error Handling Step Test", () => {
         });
     });
 
+
+    lab.test("Throw error in continue on error should stop the execution", () => {
+        let execute = new Execute();
+
+        let executionTree = Execute.prepareExecutionTree([
+            {
+                title: "step 1",
+                action: (data) => {
+                    return {a: 1};
+                }
+            },
+            {
+                title: "step 2",
+                action: (data) => {
+                    return Promise.reject({name: "error", message: "custom error"});
+                },
+                errorHandling: {
+                    continueOnError: true,
+                    onError: ()=> {
+                        return Promise.reject("error");
+                    }
+                }
+            },
+            {
+                title: "step 3",
+                action: (data) => {
+                    return {c: 3};
+                }
+            }
+        ]);
+
+
+        let executionData = {
+            sub_id: 123
+        };
+
+        return execute.run(executionTree, executionData).catch((error) => {
+            lab.expect(error).to.equal("error");
+        });
+    });
+
 });
