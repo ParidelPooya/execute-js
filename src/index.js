@@ -17,6 +17,7 @@ class Execute {
         Execute._actions[Execute.builtinActionType.PROMISE] =  Execute.promiseAction;
 
         Execute._actions[Execute.builtinActionType.MAP] = Execute.mapActionHandler;
+        Execute._actions[Execute.builtinActionType.WHILE] = Execute.whileActionHandler;
         Execute._actions[Execute.builtinActionType.CHILD_EXECUTION_TREE] = Execute.childExecutionTreeHandler;
 
         this._options = Utility.spreadify()(defaultOption, options || {});
@@ -98,6 +99,33 @@ class Execute {
         });
     }
 
+    static whileActionHandler(action, executionData, options) {
+        /*
+            action should be object with
+            {
+                test: while will loop until test result becomes false,
+                executionTree:  executionTree to execute
+            }
+         */
+        let final = [];
+        let _self = this;
+
+        function runOnce() {
+            if (action.test(executionData, options)) {
+                return _self.executeExecutionTree(action.executionTree, executionData)
+                    .then((response) => {
+                        final.push(response.result);
+                        return runOnce();
+                    });
+            } else {
+                return {result: final, signal: Execute.executionMode.CONTINUE};
+            }
+        }
+
+        return runOnce();
+    }
+
+
     static prepareExecutionTree(executionTree) {
 
         let _executionTree;
@@ -144,6 +172,9 @@ class Execute {
         if (_step.actionType === Execute.builtinActionType.CHILD_EXECUTION_TREE) {
             _step.action.executionTree = Execute.prepareExecutionTree(_step.action.executionTree);
         } else if(_step.actionType === Execute.builtinActionType.MAP && _step.action.executionTree) {
+            // if actionType is MAP and the action is a child execution tree
+            _step.action.executionTree = Execute.prepareExecutionTree(_step.action.executionTree);
+        } else if(_step.actionType === Execute.builtinActionType.WHILE && _step.action.executionTree) {
             // if actionType is MAP and the action is a child execution tree
             _step.action.executionTree = Execute.prepareExecutionTree(_step.action.executionTree);
         }
@@ -778,6 +809,7 @@ Execute.builtinActionType = {
     DEFAULT: "default",
     PROMISE: "promise",
     MAP: "map",
+    WHILE: "while",
     CHILD_EXECUTION_TREE: "execution-tree"
 };
 
