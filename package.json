@@ -19,11 +19,11 @@
     "babel-plugin-add-module-exports": "0.2.1",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-env": "^1.6.1",
-    "code": "^4.0.0",
+    "code": "^5.2.0",
     "coveralls": "^3.0.0",
     "eslint": "4.10.0",
     "eslint-loader": "1.9.0",
-    "lab": "^14.3.4",
+    "lab": "^15.4.5",
     "pre-commit": "^1.2.2",
     "webpack": "^3.8.1"
   },

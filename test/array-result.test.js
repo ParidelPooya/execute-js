@@ -1,4 +1,6 @@
 const lab = require("lab").script();
+const code = require("code");
+
 exports.lab = lab;
 
 let Execute = require("../src/index");
@@ -50,7 +52,7 @@ lab.experiment("Array Result Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.main.length).to.equal(3);
+            code.expect(result.main.length).to.equal(3);
         });
     });
 
@@ -99,7 +101,7 @@ lab.experiment("Array Result Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.main.length).to.equal(3);
+            code.expect(result.main.length).to.equal(3);
         });
     });
 

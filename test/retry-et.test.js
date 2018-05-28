@@ -1,4 +1,6 @@
 const lab = require("lab").script();
+const code = require("code");
+
 exports.lab = lab;
 
 let Execute = require("../src/index");
@@ -40,8 +42,8 @@ lab.experiment("Retry Execution Tree -", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.a).to.equal(1);
-            lab.expect(retryCount).to.equal(9);
+            code.expect(result.a).to.equal(1);
+            code.expect(retryCount).to.equal(9);
         });
     });
 
@@ -81,8 +83,8 @@ lab.experiment("Retry Execution Tree -", () => {
 
         return execute.run(executionTree, executionData).then( ()=> {
         }).catch((e)=> {
-            lab.expect(e.errorCode).to.equal(1);
-            lab.expect(retryCount).to.equal(1);
+            code.expect(e.errorCode).to.equal(1);
+            code.expect(retryCount).to.equal(1);
         });
     });
 

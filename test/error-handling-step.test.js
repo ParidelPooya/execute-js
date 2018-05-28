@@ -1,4 +1,5 @@
 const lab = require("lab").script();
+const code = require("code");
 
 exports.lab = lab;
 
@@ -39,7 +40,7 @@ lab.experiment("Error Handling Step Test", () => {
         };
 
         return execute.run(executionTree, executionData).then((result) => {
-            lab.expect(result.c).to.equal(3);
+            code.expect(result.c).to.equal(3);
         });
     });
 
@@ -77,8 +78,8 @@ lab.experiment("Error Handling Step Test", () => {
         };
 
         return execute.run(executionTree, executionData).then((result) => {
-            lab.expect(result.b).to.not.be.undefined();
-            lab.expect(result.a).to.equal(1);
+            code.expect(result.b).to.not.be.undefined();
+            code.expect(result.a).to.equal(1);
         });
     });
 
@@ -121,8 +122,8 @@ lab.experiment("Error Handling Step Test", () => {
         };
 
         return execute.run(executionTree, executionData).then((result) => {
-            lab.expect(result.b).to.not.be.undefined();
-            lab.expect(result.a).to.equal(1);
+            code.expect(result.b).to.not.be.undefined();
+            code.expect(result.a).to.equal(1);
         });
     });
 
@@ -163,7 +164,7 @@ lab.experiment("Error Handling Step Test", () => {
         };
 
         return execute.run(executionTree, executionData).catch((error) => {
-            lab.expect(error).to.equal("error");
+            code.expect(error).to.equal("error");
         });
     });
 

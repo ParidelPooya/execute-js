@@ -1,11 +1,13 @@
 const lab = require("lab").script();
+const code = require("code");
+
 exports.lab = lab;
 
 let Execute = require("../src/index");
 
 lab.experiment("Get Step By Id Test", () => {
 
-    lab.test("returns step by passing id", (done) => {
+    lab.test("returns step by passing id", () => {
 
         let executionTree = Execute.prepareExecutionTree([
             {
@@ -25,11 +27,10 @@ lab.experiment("Get Step By Id Test", () => {
 
         let step = Execute.getStepById(executionTree, "id2");
 
-        lab.expect(step.id).to.equal("id2");
-        done();
+        code.expect(step.id).to.equal("id2");
     });
 
-    lab.test("should return false if step is not found", (done) => {
+    lab.test("should return false if step is not found", () => {
 
         let executionTree = Execute.prepareExecutionTree([
             {
@@ -70,11 +71,10 @@ lab.experiment("Get Step By Id Test", () => {
 
         let step = Execute.getStepById(executionTree, "id5");
 
-        lab.expect(step).to.equal(false);
-        done();
+        code.expect(step).to.equal(false);
     });
 
-    lab.test("returns child step by passing id", (done) => {
+    lab.test("returns child step by passing id", () => {
 
         let executionTree = Execute.prepareExecutionTree([
             {
@@ -110,8 +110,7 @@ lab.experiment("Get Step By Id Test", () => {
 
         let step = Execute.getStepById(executionTree, "step3_1");
 
-        lab.expect(step.id).to.equal("step3_1");
-        done();
+        code.expect(step.id).to.equal("step3_1");
     });
 
 });

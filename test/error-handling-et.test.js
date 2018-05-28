@@ -1,4 +1,5 @@
 const lab = require("lab").script();
+const code = require("code");
 
 exports.lab = lab;
 
@@ -42,7 +43,7 @@ lab.experiment("Error Handling Execution Tree Test", () => {
         };
 
         return execute.run(executionTree, executionData).then((result) => {
-            lab.expect(result.x).to.equal(1);
+            code.expect(result.x).to.equal(1);
         });
     });
 
@@ -87,7 +88,7 @@ lab.experiment("Error Handling Execution Tree Test", () => {
         };
 
         return execute.run(executionTree, executionData).then((result) => {
-            lab.expect(result.x).to.equal(-1);
+            code.expect(result.x).to.equal(-1);
         });
     });
 

@@ -1,4 +1,6 @@
 const lab = require("lab").script();
+const code = require("code");
+
 exports.lab = lab;
 
 let Execute = require("../src/index");
@@ -20,7 +22,7 @@ lab.experiment("Custom Options Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.a).to.equal(1);
+            code.expect(result.a).to.equal(1);
         });
     });
 

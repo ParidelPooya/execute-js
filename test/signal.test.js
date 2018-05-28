@@ -1,4 +1,6 @@
 const lab = require("lab").script();
+const code = require("code");
+
 exports.lab = lab;
 
 let Execute = require("../src/index");
@@ -33,7 +35,7 @@ lab.experiment("Signal - ", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.c).to.be.undefined();
+            code.expect(result.c).to.be.undefined();
         });
     });
 
@@ -88,11 +90,11 @@ lab.experiment("Signal - ", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.a).to.equal(1);
-            lab.expect(result.c).to.equal(3);
-            lab.expect(result.d).to.equal(4);
-            lab.expect(result.e).to.be.undefined();
-            lab.expect(result.f).to.equal(6);
+            code.expect(result.a).to.equal(1);
+            code.expect(result.c).to.equal(3);
+            code.expect(result.d).to.equal(4);
+            code.expect(result.e).to.be.undefined();
+            code.expect(result.f).to.equal(6);
         });
     });
 
@@ -145,11 +147,11 @@ lab.experiment("Signal - ", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.a).to.equal(1);
-            lab.expect(result.c).to.equal(3);
-            lab.expect(result.d).to.equal(4);
-            lab.expect(result.e).to.be.undefined();
-            lab.expect(result.f).to.be.undefined();
+            code.expect(result.a).to.equal(1);
+            code.expect(result.c).to.equal(3);
+            code.expect(result.d).to.equal(4);
+            code.expect(result.e).to.be.undefined();
+            code.expect(result.f).to.be.undefined();
         });
     });
 

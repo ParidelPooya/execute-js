@@ -1,4 +1,6 @@
 const lab = require("lab").script();
+const code = require("code");
+
 exports.lab = lab;
 
 let Execute = require("../src/index");
@@ -38,7 +40,7 @@ lab.experiment("Condition Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.b).to.equal(2);
+            code.expect(result.b).to.equal(2);
         });
     });
 
@@ -68,7 +70,7 @@ lab.experiment("Condition Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.b).to.equal(2);
+            code.expect(result.b).to.equal(2);
         });
     });
 
@@ -93,7 +95,7 @@ lab.experiment("Condition Test", () => {
 
         return execute.run(executionTree, executionData).then( ()=> {
         }).catch( (e)=> {
-            lab.expect(e).to.equal("Unhandled scenario");
+            code.expect(e).to.equal("Unhandled scenario");
         });
     });
 
@@ -131,7 +133,7 @@ lab.experiment("Condition Test", () => {
         ]);
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.b).to.equal(2);
+            code.expect(result.b).to.equal(2);
         });
     });
 });

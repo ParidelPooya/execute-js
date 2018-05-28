@@ -1,4 +1,6 @@
 const lab = require("lab").script();
+const code = require("code");
+
 exports.lab = lab;
 
 let Execute = require("../src/index");
@@ -31,7 +33,7 @@ lab.experiment("Changing Output Tests", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.differentNode.subnode).to.be.undefined();
+            code.expect(result.differentNode.subnode).to.be.undefined();
 
         });
     });
@@ -83,9 +85,9 @@ lab.experiment("Changing Output Tests", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.differentNode.subnode.b).to.equal(2);
-            lab.expect(result.a).to.be.undefined();
-            lab.expect(result.c).to.be.undefined();
+            code.expect(result.differentNode.subnode.b).to.equal(2);
+            code.expect(result.a).to.be.undefined();
+            code.expect(result.c).to.be.undefined();
         });
     });
 
@@ -149,9 +151,9 @@ lab.experiment("Changing Output Tests", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.differentNode.subnode.b).to.equal(2);
-            lab.expect(result.differentNode.subnode.x).to.be.undefined();
-            lab.expect(result.c).to.be.undefined();
+            code.expect(result.differentNode.subnode.b).to.equal(2);
+            code.expect(result.differentNode.subnode.x).to.be.undefined();
+            code.expect(result.c).to.be.undefined();
         });
     });
 });
