@@ -1,4 +1,6 @@
 const lab = require("lab").script();
+const code = require("code");
+
 exports.lab = lab;
 
 let Execute = require("../src/index");
@@ -43,7 +45,7 @@ lab.experiment("Loop array Test", () => {
         let executionData = {};
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(Array.isArray(result.while_output)).to.equal(true);
+            code.expect(Array.isArray(result.while_output)).to.equal(true);
         });
     });
 

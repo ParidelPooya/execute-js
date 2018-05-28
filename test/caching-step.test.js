@@ -1,4 +1,6 @@
 const lab = require("lab").script();
+const code = require("code");
+
 exports.lab = lab;
 
 let Execute = require("../src/index");
@@ -62,7 +64,7 @@ lab.experiment("Caching Step Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.a).to.equal(1);
+            code.expect(result.a).to.equal(1);
         });
     });
 
@@ -126,14 +128,14 @@ lab.experiment("Caching Step Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.a).to.equal(1);
+            code.expect(result.a).to.equal(1);
 
             let stat = Execute.extractStatistics(executionTree);
             let cacheCount =
                 stat.steps[0].statistics.cache.missesNo +
                 stat.steps[0].statistics.cache.hitsNo;
 
-            lab.expect(cacheCount).to.equal(1);
+            code.expect(cacheCount).to.equal(1);
 
         });
     });
@@ -196,14 +198,14 @@ lab.experiment("Caching Step Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.a).to.equal(1);
+            code.expect(result.a).to.equal(1);
 
             let stat = Execute.extractStatistics(executionTree);
             let cacheCount =
                 stat.steps[0].statistics.cache.missesNo +
                 stat.steps[0].statistics.cache.hitsNo;
 
-            lab.expect(cacheCount).to.equal(0);
+            code.expect(cacheCount).to.equal(0);
 
         });
     });

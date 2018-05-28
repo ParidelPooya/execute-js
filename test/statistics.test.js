@@ -1,4 +1,6 @@
 const lab = require("lab").script();
+const code = require("code");
+
 exports.lab = lab;
 
 let Execute = require("../src/index");
@@ -45,7 +47,7 @@ lab.experiment("Statistics - ", () => {
         return execute.run(executionTree, executionData).then( ()=> {
             let stat = Execute.extractStatistics(executionTree);
 
-            lab.expect(stat.steps[0].if.true.steps[0].statistics.count).to.equal(1);
+            code.expect(stat.steps[0].if.true.steps[0].statistics.count).to.equal(1);
         });
     });
 

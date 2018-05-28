@@ -1,4 +1,6 @@
 const lab = require("lab").script();
+const code = require("code");
+
 exports.lab = lab;
 
 let Execute = require("../src/index");
@@ -20,7 +22,7 @@ lab.experiment("Basic Steps Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.a).to.equal(1);
+            code.expect(result.a).to.equal(1);
         });
     });
 
@@ -55,11 +57,11 @@ lab.experiment("Basic Steps Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.a).to.equal(1);
-            lab.expect(result.b).to.equal(2);
-            lab.expect(result.c).to.equal(3);
-            lab.expect(result.d).to.equal(4);
-            lab.expect(result.e).to.equal(5);
+            code.expect(result.a).to.equal(1);
+            code.expect(result.b).to.equal(2);
+            code.expect(result.c).to.equal(3);
+            code.expect(result.d).to.equal(4);
+            code.expect(result.e).to.equal(5);
         });
     });
 
@@ -82,7 +84,7 @@ lab.experiment("Basic Steps Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.a).to.equal(2);
+            code.expect(result.a).to.equal(2);
         });
     });
 
@@ -105,7 +107,7 @@ lab.experiment("Basic Steps Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.a).to.equal(null);
+            code.expect(result.a).to.equal(null);
 
         });
     });
@@ -129,7 +131,7 @@ lab.experiment("Basic Steps Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.a.x).to.equal(1);
+            code.expect(result.a.x).to.equal(1);
 
         });
     });
@@ -153,8 +155,8 @@ lab.experiment("Basic Steps Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.a.y).to.be.undefined();
-            lab.expect(result.a.x).to.equal(1);
+            code.expect(result.a.y).to.be.undefined();
+            code.expect(result.a.x).to.equal(1);
 
         });
     });
@@ -193,7 +195,7 @@ lab.experiment("Basic Steps Test", () => {
         ]);
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.b).to.equal(null);
+            code.expect(result.b).to.equal(null);
         });
     });
 
@@ -219,7 +221,7 @@ lab.experiment("Basic Steps Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.a).to.equal(1);
+            code.expect(result.a).to.equal(1);
         });
     });
 
@@ -256,7 +258,7 @@ lab.experiment("Basic Steps Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.agent.office).to.equal("VCLD");
+            code.expect(result.agent.office).to.equal("VCLD");
         });
     });
 
@@ -294,7 +296,7 @@ lab.experiment("Basic Steps Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result).to.equal("123456");
+            code.expect(result).to.equal("123456");
         });
     });
 });

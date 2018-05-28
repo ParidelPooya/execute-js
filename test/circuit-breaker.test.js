@@ -1,4 +1,6 @@
 const lab = require("lab").script();
+const code = require("code");
+
 exports.lab = lab;
 
 let Execute = require("../src/index");
@@ -68,7 +70,7 @@ lab.experiment("Circuit Breaker -", () => {
 
 
         return runItAgain().catch(() => {
-            lab.expect(executionTree.steps[0].circuitBreaker.shortCircuitCount).to.not.be.equal(0);
+            code.expect(executionTree.steps[0].circuitBreaker.shortCircuitCount).to.not.be.equal(0);
         });
     });
 

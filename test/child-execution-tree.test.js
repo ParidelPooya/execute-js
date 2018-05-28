@@ -1,4 +1,6 @@
 const lab = require("lab").script();
+const code = require("code");
+
 exports.lab = lab;
 
 let Execute = require("../src/index");
@@ -34,7 +36,7 @@ lab.experiment("Child Execution Tree Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.z).to.equal(1);
+            code.expect(result.z).to.equal(1);
         });
     });
 
@@ -68,7 +70,7 @@ lab.experiment("Child Execution Tree Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.z).to.equal(123);
+            code.expect(result.z).to.equal(123);
         });
     });
 
@@ -113,7 +115,7 @@ lab.experiment("Child Execution Tree Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.x).to.be.undefined();
+            code.expect(result.x).to.be.undefined();
         });
     });
 

@@ -1,4 +1,6 @@
 const lab = require("lab").script();
+const code = require("code");
+
 exports.lab = lab;
 
 let Execute = require("../src/index");
@@ -58,9 +60,9 @@ lab.experiment("Overwriting Result - ", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.main.a).to.equal(0);
-            lab.expect(result.main.b).to.equal(0);
-            lab.expect(result.main.c).to.equal(3);
+            code.expect(result.main.a).to.equal(0);
+            code.expect(result.main.b).to.equal(0);
+            code.expect(result.main.c).to.equal(3);
         });
     });
 

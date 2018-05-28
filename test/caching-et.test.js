@@ -1,4 +1,6 @@
 const lab = require("lab").script();
+const code = require("code");
+
 exports.lab = lab;
 
 let Execute = require("../src/index");
@@ -43,8 +45,8 @@ lab.experiment("Caching Execution Tree Test", () => {
 
             let stat = Execute.extractStatistics(executionTree);
 
-            lab.expect(stat.statistics.cache.missesNo).to.equal(1);
-            lab.expect(stat.statistics.cache.hitsNo).to.equal(0);
+            code.expect(stat.statistics.cache.missesNo).to.equal(1);
+            code.expect(stat.statistics.cache.hitsNo).to.equal(0);
 
             executionTree = Execute.prepareExecutionTree({
                 concurrency: 1,
@@ -58,12 +60,12 @@ lab.experiment("Caching Execution Tree Test", () => {
             });
 
             return execute.run(executionTree, executionData).then( (result)=> {
-                lab.expect(result.a).to.equal(1);
+                code.expect(result.a).to.equal(1);
 
                 let stat = Execute.extractStatistics(executionTree);
 
-                lab.expect(stat.statistics.cache.missesNo).to.equal(0);
-                lab.expect(stat.statistics.cache.hitsNo).to.equal(1);
+                code.expect(stat.statistics.cache.missesNo).to.equal(0);
+                code.expect(stat.statistics.cache.hitsNo).to.equal(1);
 
             });
 
@@ -126,14 +128,14 @@ lab.experiment("Caching Execution Tree Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.a).to.equal(1);
+            code.expect(result.a).to.equal(1);
 
             let stat = Execute.extractStatistics(executionTree);
             let cacheCount =
                 stat.statistics.cache.missesNo +
                 stat.statistics.cache.hitsNo;
 
-            lab.expect(cacheCount).to.equal(1);
+            code.expect(cacheCount).to.equal(1);
 
         });
     });
@@ -191,14 +193,14 @@ lab.experiment("Caching Execution Tree Test", () => {
         };
 
         return execute.run(executionTree, executionData).then( (result)=> {
-            lab.expect(result.a).to.equal(1);
+            code.expect(result.a).to.equal(1);
 
             let stat = Execute.extractStatistics(executionTree);
             let cacheCount =
                 stat.steps[0].statistics.cache.missesNo +
                 stat.steps[0].statistics.cache.hitsNo;
 
-            lab.expect(cacheCount).to.equal(0);
+            code.expect(cacheCount).to.equal(0);
 
         });
     });
