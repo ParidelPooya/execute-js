@@ -12,7 +12,6 @@ lab.experiment("Child Execution Tree Test", () => {
 
         // prepareExecutionTree should run internally against this child execution tree
         let childExecutionTree = {
-            concurrency: 1,
             steps :[
                 {
                     title:"step c1",
@@ -45,7 +44,7 @@ lab.experiment("Child Execution Tree Test", () => {
 
         // prepareExecutionTree should run internally against this child execution tree
         let childExecutionTree = {
-            concurrency: 1,
+
             steps :[
                 {
                     title:"step c1",
@@ -116,6 +115,52 @@ lab.experiment("Child Execution Tree Test", () => {
 
         return execute.run(executionTree, executionData).then( (result)=> {
             code.expect(result.x).to.be.undefined();
+        });
+    });
+
+    lab.test("ignore child signal should be handled", () => {
+        let execute = new Execute();
+
+        // prepareExecutionTree should run internally against this child execution tree
+        let childExecutionTree = {
+            concurrency: 1,
+            steps :[
+                {
+                    title:"step c1",
+                    action: (data) => ({z: data.input})
+                },
+                {
+                    test: (data) => data.input === 123,
+                    if: {
+                        true: Execute.executionMode.STOP_ENTIRE_EXECUTION,
+                        false: Execute.executionMode.CONTINUE
+                    }
+                }
+            ]
+        };
+
+        let executionTree = Execute.prepareExecutionTree([
+            {
+                title:"step 1",
+                actionType: "execution-tree",
+                action: {
+                    executionTree: childExecutionTree,
+                    executionData: (data)=> ({input : data.code}),
+                    ignoreChildSignal: true
+                }
+            },
+            {
+                title:"step 2",
+                action: () => ({x: "data"})
+            },
+        ]);
+
+        let executionData = {
+            code :123
+        };
+
+        return execute.run(executionTree, executionData).then( (result)=> {
+            code.expect(result.x).to.be.equal("data");
         });
     });
 
