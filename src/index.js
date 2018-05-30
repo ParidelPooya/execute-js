@@ -42,11 +42,17 @@ class Execute {
             action should be a object with
             executionTree:  a valid execution tree
             executionData: optional, data to pass to execution tree, if not specified then entire data will pass
+            ignoreChildSignal: boolean
          */
 
         let data = action.executionData ? action.executionData(executionData) : executionData;
 
-        return this.executeExecutionTree(action.executionTree, data);
+        return this.executeExecutionTree(action.executionTree, data).then((result)=> {
+            if (action.ignoreChildSignal) {
+                result.signal = Execute.executionMode.CONTINUE;
+            }
+            return result;
+        });
 
     }
 
