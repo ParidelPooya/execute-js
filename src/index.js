@@ -325,7 +325,7 @@ class Execute {
             step: step.title,
             event: Execute.eventsTitle.testResult,
             testResult: testResult,
-            ...this._options.context
+            context: this._options.context
         });
 
         // get a reference to the next step based on the test result
@@ -363,7 +363,7 @@ class Execute {
                         step: step.title,
                         event: Execute.eventsTitle.actionRetry,
                         cause: err,
-                        ...this._options.context
+                        context: this._options.context
                     });
 
                     return retryPromise(tries);
@@ -372,7 +372,7 @@ class Execute {
                         step: step.title,
                         event: Execute.eventsTitle.actionFailed,
                         cause: err,
-                        ...this._options.context
+                        context: this._options.context
                     });
 
                     return Promise.reject(err);
@@ -444,7 +444,7 @@ class Execute {
                                 step: step.title,
                                 event: Execute.eventsTitle.cacheHit,
                                 result: data,
-                                ...this._options.context
+                                context: this._options.context
                             });
 
                             step.statistics.cache.hitsNo++;
@@ -455,7 +455,7 @@ class Execute {
                             this._options.logger.info({
                                 step: step.title,
                                 event: Execute.eventsTitle.cacheMiss,
-                                ...this._options.context
+                                context:this._options.context
                             });
 
                             // update statistics
@@ -469,7 +469,7 @@ class Execute {
                                             step: step.title,
                                             event: Execute.eventsTitle.cacheSet,
                                             setResult: set_result,
-                                            ...this._options.context
+                                            context: this._options.context
                                         });
 
                                         step.statistics.cache.missesTotal += (new Date() - startTime);
@@ -505,7 +505,7 @@ class Execute {
                             step: step.title,
                             cause: err,
                             event: Execute.eventsTitle.continueOnError,
-                            ...this._options.context
+                            context: this._options.context
                         });
 
                         return {result:data, signal: Execute.executionMode.CONTINUE};
@@ -514,7 +514,7 @@ class Execute {
                             step: step.title,
                             event: Execute.eventsTitle.actionFailed,
                             cause: err,
-                            ...this._options.context
+                            context: this._options.context
                         });
 
                         return Promise.reject(err);
@@ -529,7 +529,7 @@ class Execute {
         this._options.logger.info({
             step: step.title,
             event: Execute.eventsTitle.stepStartProcessing,
-            ...this._options.context
+            context: this._options.context
         });
 
         if ("test" in step) {
@@ -541,7 +541,7 @@ class Execute {
                 this._options.logger.info({
                     step: step.title,
                     event: Execute.eventsTitle.childFinished,
-                    ...this._options.context
+                    context: this._options.context
                 });
 
                 childResponse.result = Utility.getByPath(childResponse.result, step.output.map.source);
@@ -560,7 +560,7 @@ class Execute {
                     step: step.title,
                     event: Execute.eventsTitle.stepFinished,
                     result: data.result,
-                    ...this._options.context
+                    context: this._options.context
                 });
 
                 return data;
@@ -651,7 +651,7 @@ class Execute {
                             step: executionTree.title,
                             event: Execute.eventsTitle.executionTreeActionRetry,
                             cause: err,
-                            ...this._options.context
+                            context: this._options.context
                         });
 
                         return retryPromise(tries);
@@ -660,7 +660,7 @@ class Execute {
                             step: executionTree.title,
                             event: Execute.eventsTitle.executionTreeActionFailed,
                             cause: err,
-                            ...this._options.context
+                            context: this._options.context
                         });
 
                         return Promise.reject(err);
@@ -686,7 +686,7 @@ class Execute {
                                 step: executionTree.title,
                                 event: Execute.eventsTitle.executionTreeCacheHit,
                                 result: data,
-                                ...this._options.context
+                                context: this._options.context
                             });
 
                             // update statistics
@@ -698,7 +698,7 @@ class Execute {
                             this._options.logger.info({
                                 step: executionTree.title,
                                 event: Execute.eventsTitle.executionTreeCacheMiss,
-                                ...this._options.context
+                                context: this._options.context
                             });
 
                             // update statistics
@@ -712,7 +712,7 @@ class Execute {
                                             step: executionTree.title,
                                             event: Execute.eventsTitle.executionTreeCacheSet,
                                             setResult: set_result,
-                                            ...this._options.context
+                                            context: this._options.context
                                         });
 
                                         executionTree.statistics.cache.missesTotal += (new Date() - startTime);
@@ -757,7 +757,7 @@ class Execute {
                             step: executionTree.title,
                             cause: err,
                             event: Execute.eventsTitle.executionTreeContinueOnError,
-                            ...this._options.context
+                            context: this._options.context
                         });
 
                         return {
@@ -769,7 +769,7 @@ class Execute {
                             step: executionTree.title,
                             event: Execute.eventsTitle.executionTreeActionFailed,
                             cause: err,
-                            ...this._options.context
+                            context: this._options.context
                         });
 
                         return Promise.reject(err);
