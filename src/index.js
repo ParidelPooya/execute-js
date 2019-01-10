@@ -244,7 +244,7 @@ class Execute {
         return Utility.clone(data);
     }
 
-    static getStepById(executionTree, stepId) {
+    static getStepById(executionTree, stepId, traverseChild) {
 
         for (let ipos = 0;ipos < executionTree.steps.length; ipos++) {
             let step = executionTree.steps[ipos];
@@ -265,6 +265,20 @@ class Execute {
                     }
 
                     let stepObj = Execute.getStepById(child, stepId);
+
+                    if (stepObj !== false) {
+                        return stepObj;
+                    }
+                }
+            }
+
+            if (traverseChild) {
+                if (
+                    (step.actionType === Execute.builtinActionType.CHILD_EXECUTION_TREE) ||
+                    (step.actionType === Execute.builtinActionType.MAP && step.action.executionTree) ||
+                    (step.actionType === Execute.builtinActionType.WHILE && step.action.executionTree)
+                ) {
+                    let stepObj = Execute.getStepById(step.action.executionTree, stepId, true);
 
                     if (stepObj !== false) {
                         return stepObj;
