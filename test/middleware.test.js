@@ -74,6 +74,7 @@ lab.experiment("Middleware Test", () => {
         // Clear all actions
         let oldActions = Execute._actions;
         Execute._actions = undefined;
+        Execute._middleware = undefined;
 
         let middleware1 = {
             type: "action",
@@ -81,6 +82,7 @@ lab.experiment("Middleware Test", () => {
             action: ()=>{}
         };
 
+        console.log("@22222");
         let res1 = Execute.use(middleware1);
 
         let middleware2 = {
@@ -88,6 +90,7 @@ lab.experiment("Middleware Test", () => {
             name: "action2",
             action: ()=>{}
         };
+
 
         let res2 = Execute.use(middleware2);
 

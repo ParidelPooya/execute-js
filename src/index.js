@@ -1,4 +1,6 @@
 const Utility = require("./utility");
+const Defenitions = require("./defenitions");
+const Middleware = require("./middleware");
 
 class Execute {
 
@@ -10,125 +12,16 @@ class Execute {
         };
 
         // check if we have actions
-        if (Execute._actions === undefined) {
-            Execute._actions = {};
-        }
-        Execute._actions[Execute.builtinActionType.DEFAULT] =  Execute.defaultAction;
-        Execute._actions[Execute.builtinActionType.PROMISE] =  Execute.promiseAction;
+        Execute._middleware = Execute._middleware || {};
 
-        Execute._actions[Execute.builtinActionType.MAP] = Execute.mapActionHandler;
-        Execute._actions[Execute.builtinActionType.WHILE] = Execute.whileActionHandler;
-        Execute._actions[Execute.builtinActionType.CHILD_EXECUTION_TREE] = Execute.childExecutionTreeHandler;
+        Execute._middleware[Execute.builtinActionType.DEFAULT] =  {action: Middleware.defaultAction};
+        Execute._middleware[Execute.builtinActionType.PROMISE] =  {action: Middleware.promiseAction};
+
+        Execute._middleware[Execute.builtinActionType.MAP] = {action: Middleware.mapActionHandler};
+        Execute._middleware[Execute.builtinActionType.WHILE] = {action: Middleware.whileActionHandler};
+        Execute._middleware[Execute.builtinActionType.CHILD_EXECUTION_TREE] = {action: Middleware.childExecutionTreeHandler};
 
         this._options = Utility.spreadify()(defaultOption, options || {});
-    }
-
-    static defaultAction(action, executionData, options) {
-        return Promise.resolve(action(executionData, options))
-            .then((data) => {
-                return {result: data, signal: Execute.executionMode.CONTINUE};
-            });
-    }
-
-    static promiseAction(action, executionData, options) {
-        return action(executionData, options)
-            .then((data) => {
-                return {result: data, signal: Execute.executionMode.CONTINUE};
-            });
-    }
-
-    static childExecutionTreeHandler(action, executionData) {
-        /*
-            action should be a object with
-            executionTree:  a valid execution tree
-            executionData: optional, data to pass to execution tree, if not specified then entire data will pass
-            ignoreChildSignal: boolean
-         */
-
-        let data = action.executionData ? action.executionData(executionData) : executionData;
-
-        return this.executeExecutionTree(action.executionTree, data).then((result)=> {
-            if (action.ignoreChildSignal) {
-                result.signal = Execute.executionMode.CONTINUE;
-            }
-            return result;
-        });
-
-    }
-
-    static mapActionHandler(action, executionData, options) {
-        /*
-            action should be object with
-            {
-                array: function that produce an array,
-
-                reducer: child step to execute for each element in the array.
-
-                executionTree:  instead of reducer we can provide child executionTree to execute
-                executionData(data, item): optional, data to pass to execution tree, if not specified then array item will pass.
-
-            }
-         */
-        let final = [];
-        let process;
-
-        if (action.reducer !== undefined) {
-            process = action.array(executionData).reduce((promise, item) => promise
-                .then(() => {
-                    return Promise
-                        .resolve(action.reducer(item, options))
-                        .then(result => {
-                            final.push(result);
-                            return final;
-                        });
-                })
-                .catch(console.error)
-                , Promise.resolve()
-            );
-        } else {
-            process =  action.array(executionData).reduce((promise, item) => promise
-                .then(() => {
-                    let data = action.executionData ? action.executionData(executionData, item) : item;
-
-                    return this.executeExecutionTree(action.executionTree, data)
-                        .then((response) => {
-                            final.push(response.result);
-                            return final;
-                        });
-                })
-                , Promise.resolve()
-            );
-        }
-
-        return process.then((data) => {
-            return {result: data, signal: Execute.executionMode.CONTINUE};
-        });
-    }
-
-    static whileActionHandler(action, executionData, options) {
-        /*
-            action should be object with
-            {
-                test: while will loop until test result becomes false,
-                executionTree:  executionTree to execute
-            }
-         */
-        let final = [];
-        let _self = this;
-
-        function runOnce() {
-            if (action.test(executionData, options)) {
-                return _self.executeExecutionTree(action.executionTree, executionData)
-                    .then((response) => {
-                        final.push(response.result);
-                        return runOnce();
-                    });
-            } else {
-                return {result: final, signal: Execute.executionMode.CONTINUE};
-            }
-        }
-
-        return runOnce();
     }
 
 
@@ -290,33 +183,7 @@ class Execute {
     }
 
     static use(middleware) {
-        if (!middleware.type) {
-            throw new Error("type is missing in middleware contract");
-        }
-
-        switch (middleware.type) {
-            case "action":
-                return Execute.addActionMiddleware(middleware);
-            default:
-                throw new Error("Unknown middleware type");
-        }
-    }
-
-    static addActionMiddleware(middleware) {
-        if (!middleware.action) {
-            throw new Error("Middleware action is missing");
-        }
-
-        if (!middleware.name) {
-            throw new Error("Middleware name is missing");
-        }
-
-        if (Execute._actions === undefined) {
-            Execute._actions = {};
-        }
-
-        Execute._actions[middleware.name] = middleware.action;
-        return true;
+        return Middleware.use(middleware, Execute);
     }
 
     run(executionTree, executionData) {
@@ -366,32 +233,31 @@ class Execute {
     executeStepActionWithRetry(step, executionData) {
 
         let retryPromise = (tries)=> {
-            let action = Execute._actions[step.actionType].apply(this, [step.action, executionData, this._options]);
+            return Middleware.executeStepActionCallMiddleware.apply(this, [step, executionData, Execute])
+                .catch( err => {
+                    // update statistics`
+                    step.statistics.errors++;
 
-            return action.catch( (err) => {
-                // update statistics
-                step.statistics.errors++;
+                    if (--tries > 0 && step.errorHandling.tryCondition(err)) {
+                        this._options.logger.warn({
+                            step: step.title,
+                            event: Execute.eventsTitle.actionRetry,
+                            cause: err,
+                            context: this._options.context
+                        });
 
-                if (--tries > 0 && step.errorHandling.tryCondition(err)) {
-                    this._options.logger.warn({
-                        step: step.title,
-                        event: Execute.eventsTitle.actionRetry,
-                        cause: err,
-                        context: this._options.context
-                    });
+                        return retryPromise(tries);
+                    } else {
+                        this._options.logger.error({
+                            step: step.title,
+                            event: Execute.eventsTitle.actionFailed,
+                            cause: err,
+                            context: this._options.context
+                        });
 
-                    return retryPromise(tries);
-                } else {
-                    this._options.logger.error({
-                        step: step.title,
-                        event: Execute.eventsTitle.actionFailed,
-                        cause: err,
-                        context: this._options.context
-                    });
-
-                    return Promise.reject(err);
-                }
-            });
+                        return Promise.reject(err);
+                    }
+                });
         };
 
         return retryPromise(step.errorHandling.maxAttempts);
@@ -795,121 +661,11 @@ class Execute {
 }
 
 // Because static keyword works only for method
-Execute.eventsTitle = {
-    testResult: "Test Result",
-
-    actionRetry: "Retry Step's Action",
-    actionFailed: "Step's Action Failed",
-    continueOnError: "Step's Action Failed, Continue Executing",
-
-    executionTreeActionRetry: "Retry Executing Execution Tree",
-    executionTreeActionFailed: "Executing Execution Tree Failed",
-    executionTreeContinueOnError: "Executing Execution Tree Failed, Continue Executing",
-
-    cacheHit: "Step's Cache Hit, Data Exist in Cache",
-    cacheMiss: "Step's Cache Miss, Data doesn't Exist in Cache",
-    cacheSet: "Step's Cache Set, Data Inserted to Cache",
-
-    executionTreeCacheHit: "Execution Tree's Cache Hit, Data Exist in Cache",
-    executionTreeCacheMiss: "Execution Tree's Cache Miss, Data doesn't Exist in Cache",
-    executionTreeCacheSet: "Execution Tree's Cache Set, Data Inserted to Cache",
-
-    stepStartProcessing: "Start Processing Step",
-    childFinished: "Child Execution Tree Returned Data",
-    stepFinished: "Step Execution Finished"
-};
-
-Execute.executionMode = {
-    CONTINUE: 0,
-    STOP_LEVEL_EXECUTION: 1,
-    STOP_ENTIRE_EXECUTION: 2
-};
-
-Execute.builtinActionType = {
-    DEFAULT: "default",
-    PROMISE: "promise",
-    MAP: "map",
-    WHILE: "while",
-    CHILD_EXECUTION_TREE: "execution-tree"
-};
-
-Execute.executionTreeDefaultSetting = {
-    title: "No name execution tree",
-    concurrency: 1,
-    cache: {
-        enable: false,
-        ttl: 60
-    },
-    errorHandling: {
-        maxAttempts: 0,
-        tryCondition: () => true,
-        continueOnError: false,
-        onError: () => ({})
-    },
-    statistics:{
-        count:0,
-        total:0,
-        min: Number.MAX_VALUE,
-        max:0,
-        errors:0,
-        cache: {
-            missesNo: 0,
-            missesTotal: 0,
-
-            hitsNo:0,
-            hitsTotal: 0
-        }
-    }
-};
-
-
-Execute.stepDefaultSetting = {
-    title: "No name step",
-    errorHandling: {
-        maxAttempts: 0,
-        tryCondition: () => true,
-        continueOnError: false,
-        onError: () => ({}),
-    },
-    circuitBreaker: {
-        enable: false,
-        duration: 10000,
-        threshold: 0.4,
-        waitThreshold: 50,
-        shortCircuitStartTime: 0,
-        shortCircuited: false,
-        shortCircuitCount: 0,
-        failed: 0,
-        successful: 0
-    },
-    cache: {
-        enable: false,
-        ttl: 60
-    },
-    output: {
-        accessibleToNextSteps: true,
-        addToResult: true,
-        map: {
-            source: "",
-            destination: ""
-        }
-    },
-    actionType: "default",
-    action: () => ({}),
-    statistics:{
-        count:0,
-        total:0,
-        min: Number.MAX_VALUE,
-        max:0,
-        errors:0,
-        cache: {
-            missesNo: 0,
-            missesTotal: 0,
-
-            hitsNo:0,
-            hitsTotal: 0
-        }
-    }
-};
+Execute.eventsTitle = Defenitions.eventsTitle;
+Execute.executionMode = Defenitions.executionMode;
+Execute.builtinActionType = Defenitions.builtinActionType;
+Execute.executionTreeDefaultSetting = Defenitions.executionTreeDefaultSetting;
+Execute.middlewareDefaultSetting = Defenitions.middlewareDefaultSetting;
+Execute.stepDefaultSetting = Defenitions.stepDefaultSetting;
 
 module.exports = Execute;
