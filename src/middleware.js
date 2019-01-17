@@ -149,6 +149,7 @@ function executeStepActionCallMiddleware(step, executionData, Execute) {
     let cacheKey = middleware.cache.key(executionData);
 
     if (cacheKey !== undefined && cacheKey !== "") {
+
         let startTime = new Date();
 
         return this._options.cache.get(cacheKey)
@@ -197,6 +198,7 @@ function executeStepActionCallMiddleware(step, executionData, Execute) {
     }
 
     return middleware.action.apply(this, [step.action, executionData, this._options]);
+
 }
 
 module.exports = {
