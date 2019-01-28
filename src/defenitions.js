@@ -82,6 +82,7 @@ const stepDefaultSetting = {
         ttl: 60
     },
     output: {
+        waitForTheResult: true,
         accessibleToNextSteps: true,
         addToResult: true,
         map: {

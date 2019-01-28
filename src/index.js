@@ -470,32 +470,42 @@ class Execute {
             ps.push(() => {
                 let startTime = new Date();
 
-                return this.processStep(step, executionData)
+                let stepPromise = this.processStep(step, executionData)
                     .then(response => {
                         let processTime = (new Date() - startTime);
                         this.recordStatistics(step, processTime);
 
-                        finalSignal = Math.max(finalSignal, response.signal);
-
-                        if (step.output.accessibleToNextSteps) {
-                            if (step.output.map.destination.length !== 0) {
-                                Utility.copyData(executionData, response.result, step.output.map.destination);
-                            } else {
-                                executionData = Utility.extend(executionData, response.result);
-                            }
-                        }
-
-                        if (step.output.addToResult) {
-                            if (step.output.map.destination.length !== 0) {
-                                Utility.copyData(finalResult, response.result, step.output.map.destination);
-                            }
-                            else {
-                                finalResult = Utility.extend(finalResult, response.result);
-                            }
-                        }
-
-                        return {result: finalResult, signal: finalSignal};
+                        return response;
                     });
+
+                let myPromie = step.output.waitForTheResult ? stepPromise : Promise.resolve({
+                    signal: Execute.executionMode.CONTINUE,
+                    result: {}
+                });
+
+
+                return myPromie.then(response => {
+                    finalSignal = Math.max(finalSignal, response.signal);
+
+                    if (step.output.accessibleToNextSteps) {
+                        if (step.output.map.destination.length !== 0) {
+                            Utility.copyData(executionData, response.result, step.output.map.destination);
+                        } else {
+                            executionData = Utility.extend(executionData, response.result);
+                        }
+                    }
+
+                    if (step.output.addToResult) {
+                        if (step.output.map.destination.length !== 0) {
+                            Utility.copyData(finalResult, response.result, step.output.map.destination);
+                        }
+                        else {
+                            finalResult = Utility.extend(finalResult, response.result);
+                        }
+                    }
+
+                    return {result: finalResult, signal: finalSignal};
+                });
             });
         });
 
