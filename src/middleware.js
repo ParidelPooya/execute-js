@@ -146,7 +146,8 @@ function executeStepActionCallMiddleware(step, executionData, Execute) {
         return middleware.action.apply(this, [step.action, executionData, this._options]);
     }
 
-    let cacheKey = middleware.cache.key(executionData);
+    let data = typeof(step.action) === "function" ? step.action(executionData) : step.action;
+    let cacheKey = middleware.cache.key(data);
 
     if (cacheKey !== undefined && cacheKey !== "") {
 

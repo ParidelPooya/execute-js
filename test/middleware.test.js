@@ -281,7 +281,8 @@ lab.experiment("Middleware Test", () => {
         };
         Execute.use(middleware1);
         let step1 = {
-            actionType: "action1"
+            actionType: "action1",
+            action: (data) => data,
         };
 
         return Middleware.executeStepActionCallMiddleware.apply(execute,[step1, executionData, Execute]).then(() => {
