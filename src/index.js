@@ -20,6 +20,8 @@ class Execute {
         Execute._middleware[Execute.builtinActionType.MAP] = {action: Middleware.mapActionHandler};
         Execute._middleware[Execute.builtinActionType.WHILE] = {action: Middleware.whileActionHandler};
         Execute._middleware[Execute.builtinActionType.CHILD_EXECUTION_TREE] = {action: Middleware.childExecutionTreeHandler};
+        Execute._middleware[Execute.builtinActionType.SIGNAL] = {action: Middleware.signalAction};
+
 
         this._options = Utility.spreadify()(defaultOption, options || {});
     }

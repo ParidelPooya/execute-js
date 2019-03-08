@@ -9,7 +9,8 @@ const builtinActionType = {
     PROMISE: "promise",
     MAP: "map",
     WHILE: "while",
-    CHILD_EXECUTION_TREE: "execution-tree"
+    CHILD_EXECUTION_TREE: "execution-tree",
+    SIGNAL: "signal"
 };
 
 const executionTreeDefaultSetting = {

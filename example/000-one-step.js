@@ -5,7 +5,11 @@ let execute = new Execute();
 let executionTree = Execute.prepareExecutionTree([
     {
         title: "step 1",
-        action: (data) => {return {a: 1};}
+        action: (data) =>  {return {a: 1};}
+    },
+    {
+        title: "step 1",
+        action: (data) => {return {b: 2};}
     }
 ]);
 

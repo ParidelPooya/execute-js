@@ -8,6 +8,10 @@ function defaultAction(action, executionData, options) {
         });
 }
 
+function signalAction(action) {
+    return Promise.resolve({result: {}, signal: action});
+}
+
 function promiseAction(action, executionData, options) {
     return action(executionData, options)
         .then((data) => {
@@ -223,6 +227,7 @@ module.exports = {
     childExecutionTreeHandler: childExecutionTreeHandler,
     mapActionHandler: mapActionHandler,
     whileActionHandler: whileActionHandler,
+    signalAction: signalAction,
     use: use,
     executeStepActionCallMiddleware: executeStepActionCallMiddleware,
 };
