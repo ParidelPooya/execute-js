@@ -45,41 +45,56 @@ function mapActionHandler(action, executionData, options) {
             executionTree:  instead of reducer we can provide child executionTree to execute
             executionData(data, item): optional, data to pass to execution tree, if not specified then array item will pass.
 
+            concurrency: number of reducer or child execution tree to execute in concurrent mode
         }
      */
+    let concurrency = action.concurrency || 1;
     let final = [];
-    let process;
+    let i = 0;
+    let listOfPromises = [];
 
-    if (action.reducer !== undefined) {
-        process = action.array(executionData).reduce((promise, item) => promise
-            .then(() => {
-                return Promise
-                    .resolve(action.reducer(item, options))
+    let ps = [];
+
+    action.array(executionData).map((itm, ipos) => {
+
+        ps.push(() => {
+            let process;
+
+            if (action.reducer !== undefined) {
+                process = Promise.resolve(action.reducer(itm, options))
                     .then(result => {
-                        final.push(result);
+                        final[ipos] = result;
                         return final;
                     });
-            })
-            .catch(console.error)
-            , Promise.resolve()
-        );
-    } else {
-        process =  action.array(executionData).reduce((promise, item) => promise
-            .then(() => {
-                let data = action.executionData ? action.executionData(executionData, item) : item;
+            } else {
+                let data = action.executionData ? action.executionData(executionData, itm) : itm;
 
-                return this.executeExecutionTree(action.executionTree, data)
+                process =  this.executeExecutionTree(action.executionTree, data)
                     .then((response) => {
-                        final.push(response.result);
+                        final[ipos] = response.result;
                         return final;
                     });
-            })
-            , Promise.resolve()
-        );
+            }
+
+            return process;
+        });
+    });
+
+    const doNextAction = () => {
+        if (i < ps.length) {
+            return ps[i++]().then(doNextAction);
+        }
+    };
+
+    while (i < concurrency && i < ps.length) {
+        listOfPromises.push(doNextAction());
     }
 
-    return process.then((data) => {
-        return {result: data, signal: Defenitions.executionMode.CONTINUE};
+    return Promise.all(listOfPromises).then(() => {
+        return {
+            result: final,
+            signal: Defenitions.executionMode.CONTINUE,
+        };
     });
 }
 
