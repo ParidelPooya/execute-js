@@ -345,7 +345,9 @@ class Execute {
                             startTime = new Date();
 
                             return this.executeStepActionWithCircuitBreaker(step, executionData).then((data) => {
-                                return this._options.cache.set(cacheKey, data, step.cache.ttl)
+                                step.statistics.cache.missesTotal += (new Date() - startTime);
+
+                                this._options.cache.set(cacheKey, data, step.cache.ttl)
                                     .then((set_result) => {
                                         this._options.logger.info({
                                             step: step.title,
@@ -353,10 +355,9 @@ class Execute {
                                             setResult: set_result,
                                             context: this._options.context
                                         });
-
-                                        step.statistics.cache.missesTotal += (new Date() - startTime);
-                                        return data;
                                     });
+
+                                return data;
                             });
                         }
                     });
@@ -598,7 +599,9 @@ class Execute {
                             startTime = new Date();
 
                             return this.executeExecutionTreeWithRetry(executionTree, executionData).then((data) => {
-                                return this._options.cache.set(cacheKey, data, executionTree.cache.ttl)
+                                executionTree.statistics.cache.missesTotal += (new Date() - startTime);
+
+                                this._options.cache.set(cacheKey, data, executionTree.cache.ttl)
                                     .then((set_result) => {
                                         this._options.logger.info({
                                             step: executionTree.title,
@@ -606,10 +609,9 @@ class Execute {
                                             setResult: set_result,
                                             context: this._options.context
                                         });
-
-                                        executionTree.statistics.cache.missesTotal += (new Date() - startTime);
-                                        return data;
                                     });
+
+                                return data;
                             });
                         }
                     });

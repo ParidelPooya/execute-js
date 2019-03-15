@@ -200,7 +200,9 @@ function executeStepActionCallMiddleware(step, executionData, Execute) {
 
                     return middleware.action.apply(this, [step.action, executionData, this._options])
                         .then((data) => {
-                            return this._options.cache.set(cacheKey, data, middleware.cache.ttl)
+                            middleware.statistics.cache.missesTotal += (new Date() - startTime);
+
+                            this._options.cache.set(cacheKey, data, middleware.cache.ttl)
                                 .then((set_result) => {
                                     this._options.logger.info({
                                         middleware: step.actionType,
@@ -208,10 +210,9 @@ function executeStepActionCallMiddleware(step, executionData, Execute) {
                                         setResult: set_result,
                                         context: this._options.context
                                     });
-
-                                    middleware.statistics.cache.missesTotal += (new Date() - startTime);
-                                    return data;
                                 });
+
+                            return data;
                         });
                 }
             });
