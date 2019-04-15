@@ -27,11 +27,11 @@ class Execute {
     }
 
 
-    static prepareExecutionTree(executionTree) {
+    static prepareExecutionTree(executionTree, defaultTitle) {
 
         let _executionTree;
 
-        if (Object.prototype.toString.call(executionTree) === "[object Array]") {
+        if (Array.isArray(executionTree)) {
             // if executionTree is array then we need to convert it to proper object with all missing properties.
             _executionTree = {
                 steps: executionTree
@@ -40,44 +40,69 @@ class Execute {
             _executionTree = executionTree;
         }
 
+        _executionTree.title = _executionTree.title || defaultTitle || Execute.rootExecutionTree.title;
+
         _executionTree = Utility.spreadify(true)(
             Utility.clone(Execute.executionTreeDefaultSetting),
             _executionTree);
 
         if (typeof(_executionTree.errorHandling.onError) !== "function") {
-            _executionTree.errorHandling.onError = Execute.prepareExecutionTree(_executionTree.errorHandling.onError);
+            _executionTree.errorHandling.onError = Execute.prepareExecutionTree(
+                _executionTree.errorHandling.onError,
+                _executionTree.title + " - onError"
+            );
         }
 
         _executionTree.steps.forEach((step, ipos) => {
-            _executionTree.steps[ipos] = Execute.prepareExecutionTreeStep(step);
+            _executionTree.steps[ipos] = Execute.prepareExecutionTreeStep(
+                step,
+                _executionTree.title + " - Step " + ipos
+            );
         });
 
         return _executionTree;
     }
 
-    static prepareExecutionTreeStep(step) {
+    static prepareExecutionTreeStep(step, defaultTitle) {
+        step.title = step.title || defaultTitle;
+
         let _step = Utility.spreadify(true)(Utility.clone(Execute.stepDefaultSetting), step);
 
         if (typeof(_step.errorHandling.onError) !== "function") {
-            _step.errorHandling.onError = Execute.prepareExecutionTree(_step.errorHandling.onError);
+            _step.errorHandling.onError = Execute.prepareExecutionTree(
+                _step.errorHandling.onError,
+                step.title + " - onError"
+            );
         }
 
         if (typeof(_step.if) !== "undefined") {
             Object.keys(_step.if).forEach((cond) => {
                 if (typeof(_step.if[cond]) === "object") {
-                    _step.if[cond] = Execute.prepareExecutionTree(_step.if[cond]);
+                    _step.if[cond] = Execute.prepareExecutionTree(
+                        _step.if[cond],
+                        defaultTitle + " - if " + cond
+                    );
                 }
             });
         }
 
         if (_step.actionType === Execute.builtinActionType.CHILD_EXECUTION_TREE) {
-            _step.action.executionTree = Execute.prepareExecutionTree(_step.action.executionTree);
+            _step.action.executionTree = Execute.prepareExecutionTree(
+                _step.action.executionTree,
+                step.title + " - child execution tree"
+            );
         } else if(_step.actionType === Execute.builtinActionType.MAP && _step.action.executionTree) {
             // if actionType is MAP and the action is a child execution tree
-            _step.action.executionTree = Execute.prepareExecutionTree(_step.action.executionTree);
+            _step.action.executionTree = Execute.prepareExecutionTree(
+                _step.action.executionTree,
+                step.title + " - map execution tree"
+            );
         } else if(_step.actionType === Execute.builtinActionType.WHILE && _step.action.executionTree) {
             // if actionType is MAP and the action is a child execution tree
-            _step.action.executionTree = Execute.prepareExecutionTree(_step.action.executionTree);
+            _step.action.executionTree = Execute.prepareExecutionTree(
+                _step.action.executionTree,
+                step.title + " - while execution tree"
+            );
         }
 
         return _step;
@@ -192,6 +217,9 @@ class Execute {
         return this.executeExecutionTree(executionTree, executionData)
             .then((response) => response.result);
     }
+
+
+
 
     nextStepKey(step, executionData) {
         const testResult = typeof step.test === "function"
@@ -624,9 +652,11 @@ class Execute {
 
     executeExecutionTree(executionTree, executionData) {
 
+        let internalData = {...executionData};
+
         let startTime = new Date();
 
-        return this.executeExecutionTreeWithCache(executionTree, executionData)
+        return this.executeExecutionTreeWithCache(executionTree, internalData)
             .then((result) => {
                 let processTime = (new Date() - startTime);
                 this.recordStatistics(executionTree, processTime);
@@ -636,10 +666,10 @@ class Execute {
                 let onErrorOp;
 
                 if (typeof(executionTree.errorHandling.onError) === "function") {
-                    onErrorOp = Promise.resolve(executionTree.errorHandling.onError(err ,executionData, this._options));
+                    onErrorOp = Promise.resolve(executionTree.errorHandling.onError(err ,internalData, this._options));
                 } else {
                     onErrorOp = this.executeExecutionTree(executionTree.errorHandling.onError, {
-                        ...executionData,
+                        ...internalData,
                         error: err
                     }).then( data => data.result);
                 }
@@ -681,5 +711,6 @@ Execute.builtinActionType = Defenitions.builtinActionType;
 Execute.executionTreeDefaultSetting = Defenitions.executionTreeDefaultSetting;
 Execute.middlewareDefaultSetting = Defenitions.middlewareDefaultSetting;
 Execute.stepDefaultSetting = Defenitions.stepDefaultSetting;
+Execute.rootExecutionTree = Defenitions.rootExecutionTree;
 
 module.exports = Execute;

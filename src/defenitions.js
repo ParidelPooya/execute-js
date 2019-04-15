@@ -14,7 +14,6 @@ const builtinActionType = {
 };
 
 const executionTreeDefaultSetting = {
-    title: "No name execution tree",
     concurrency: 1,
     cache: {
         enable: false,
@@ -137,6 +136,10 @@ const eventsTitle = {
     stepFinished: "Step Execution Finished"
 };
 
+const rootExecutionTree = {
+    title: "Root Execution Tree"
+};
+
 module.exports = {
     executionMode: executionMode,
     builtinActionType: builtinActionType,
@@ -144,5 +147,6 @@ module.exports = {
     middlewareDefaultSetting: middlewareDefaultSetting,
     stepDefaultSetting: stepDefaultSetting,
     eventsTitle: eventsTitle,
+    rootExecutionTree: rootExecutionTree,
 };
 
