@@ -455,9 +455,10 @@ class Execute {
                     context: this._options.context
                 });
 
-                childResponse.result = Utility.getByPath(childResponse.result, step.output.map.source);
-
-                return childResponse;
+                return {
+                    result: Utility.getByPath(childResponse.result, step.output.map.source),
+                    signal: childResponse.signal,
+                };
             });
         } else {
             // Only executing action when there is no test.
