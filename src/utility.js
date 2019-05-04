@@ -1,9 +1,7 @@
-const getByPath = (obj, key) => {
-    if (key.length === 0) {
+const getByPath = (obj, keys) => {
+    if (keys.length === 0) {
         return obj;
     }
-
-    let keys = key.split(".");
 
     for (let i = 0; i < keys.length; i++) {
 
@@ -17,10 +15,8 @@ const getByPath = (obj, key) => {
     return obj;
 };
 
-const copyData = (copyTo, copyFrom, path) => {
+const copyData = (copyTo, copyFrom, keys) => {
     let pointer = copyTo;
-
-    let keys = path.split(".");
 
     for (let i = 0; i < keys.length; i++) {
 

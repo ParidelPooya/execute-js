@@ -68,6 +68,22 @@ class Execute {
 
         let _step = Utility.spreadify(true)(Utility.clone(Execute.stepDefaultSetting), step);
 
+        if (typeof(_step.output.map.source) === "string") {
+            if (_step.output.map.source === "") {
+                _step.output.map.source = [];
+            } else {
+                _step.output.map.source = _step.output.map.source.split(".");
+            }
+        }
+
+        if (typeof(_step.output.map.destination) === "string") {
+            if (_step.output.map.destination === "") {
+                _step.output.map.destination = [];
+            } else {
+                _step.output.map.destination = _step.output.map.destination.split(".");
+            }
+        }
+
         if (typeof(_step.errorHandling.onError) !== "function") {
             _step.errorHandling.onError = Execute.prepareExecutionTree(
                 _step.errorHandling.onError,
