@@ -200,7 +200,7 @@ class Execute {
                         continue;
                     }
 
-                    let stepObj = Execute.getStepById(child, stepId);
+                    let stepObj = Execute.getStepById(child, stepId, traverseChild);
 
                     if (stepObj !== false) {
                         return stepObj;
